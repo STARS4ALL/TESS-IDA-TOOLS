@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools >= 45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "get-IDA"
+dynamic = ["version"]
+description = "Collection of utilities to download and analize TESS Photometer Network data from IDA files"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Rafael González", email = "rafael08@ucm.es"},
+    {name = "Jaime Zamorano", email = "jzamorano@fis.ucm.es"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+]
+dependencies = [
+  'typing-extensions', # Self for Python < 3.11
+  'python-decouple',  # Get info from enviromental variables
+  'requests',         # handle HTTP requests
+  'python-dateutil',   # date utilities
+  'lica@git+https://github.com/guaix-ucm/lica@main',
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=6",
+]
+
+[project.urls]
+Homepage = "https://github.com/STARS4ALL/TESS-IDA-TOOLS"
+Repository = "https://github.com/STARS4ALL/TESS-IDA-TOOLS.git"
+
+[project.scripts]
+
+get-tess-ida = "tess.ida.main:main"
+
+# pyproject.toml
+# Automatically generates a _version-py file from with Git information
+# This file shold be placed in .gitignore
+[tool.setuptools_scm]
+write_to = "src/tess/_version.py"
+
+[tool.setuptools.packages.find]
+# scanning for namespace packages is true by default in pyproject.toml, so
+# you do NOT need to include the following line.
+namespaces = true
+where = ["src"]
+
+[tool.setuptools]
+script-files = []
