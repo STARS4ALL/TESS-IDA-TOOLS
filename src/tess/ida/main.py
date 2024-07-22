@@ -51,7 +51,7 @@ log = logging.getLogger(__name__.split('.')[-1])
 # Auxiliary functions
 # -------------------
 
-def grouper(n, iterable):
+def grouper(n: int, iterable):
     iterable = iter(iterable)
     return iter(lambda: list(itertools.islice(iterable, n)), [])
 
@@ -102,38 +102,33 @@ async def ida_year(base_url: str, args) -> None:
     year = args.year.replace(month=1, day=1)
     name = args.name
     async with aiohttp.ClientSession() as session:
-        for grp in grouper(4, range(0,12)):
+        for grp in grouper(args.concurrent, range(0,12)):
             tasks = [asyncio.create_task(do_ida_single_month(session, base_url, name, 
                 (year + relativedelta(months=m)).strftime('%Y-%m'))) for m in grp]
             await asyncio.gather(*tasks)
 
 
-async def ida_since(base_url: str, args) -> None:
-    name = args.name
-    log.info("month_list %s", month_list)
+async def do_ida_since(base_url: str, name: str, since: datetime.datetime, until: datetime.datetime, N: int) -> None:
     async with aiohttp.ClientSession() as session:
-        for grp in grouper(4, daterange(args.since, args.until)):
+        for grp in grouper(N, daterange(since, until)):
             tasks = [asyncio.create_task(do_ida_single_month(session, base_url, name, m)) for m in grp]
             await asyncio.gather(*tasks)
 
 
-def ida_all(base_url: str, args) -> None:
-    S1 = args.from_var
-    S2 = args.to
-    M2 = args.until
-    for i in range(S1,S2+1):
+async def ida_since(base_url: str, args) -> None:
+    await do_ida_since(base_url, args.name, args.since, args.until, args.concurrent)
+
+
+async def ida_all(base_url: str, args) -> None:
+    for i in range(args.from_var, args.to+1):
         name = 'stars' + str(i)
-        M1 = args.since
-        while M1 <=  M2:
-            cur_month = M1.strftime('%Y-%m')
-            do_ida_single_month(base_url, name, cur_month)
-            M1 += relativedelta(months=1)
+        await do_ida_since(base_url, name, args.since, args.until, args.concurrent)
 
 # ===================================
 # MAIN ENTRY POINT SPECIFIC ARGUMENTS
 # ===================================
 
-def now():
+def now() -> datetime.datetime:
     return datetime.datetime.now().replace(day=1,hour=0,minute=0,second=0,microsecond=0)
 
 def add_args(parser):
@@ -147,15 +142,18 @@ def add_args(parser):
     parser_year = subparser.add_parser('year', help='Download a year of monthly files')
     parser_year.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
     parser_year.add_argument('-y', '--year', type=vyear, metavar='<YYYY>', required=True, help='Year')
-    parser_from = subparser.add_parser('since', help='Download since a given month until another')
-    parser_from.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
-    parser_from.add_argument('-s', '--since',  type=vmonth, required=True, metavar='<YYYY-MM>', help='Year and Month')
-    parser_from.add_argument('-u', '--until',  type=vmonth, default=now(), metavar='<YYYY-MM>', help='Year and Month (defaults to current month)')
+    parser_year.add_argument('-c', '--concurrent', type=int, metavar='<N>', choices=[1,2,3,4], default=4, help='Number of concurrent downloads (defaults to %(default)s)')
+    parser_since = subparser.add_parser('since', help='Download since a given month until another')
+    parser_since.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
+    parser_since.add_argument('-s', '--since',  type=vmonth, required=True, metavar='<YYYY-MM>', help='Year and Month')
+    parser_since.add_argument('-u', '--until',  type=vmonth, default=now(), metavar='<YYYY-MM>', help='Year and Month (defaults to current month)')
+    parser_since.add_argument('-c', '--concurrent', type=int, metavar='<N>', choices=[1,2,3,4], default=4, help='Number of concurrent downloads (defaults to %(default)s)')
     parser_all = subparser.add_parser('all', help='Download all photometers from a given month until another')
     parser_all.add_argument('-f', '--from', dest='from_var', type=int, required=True, help='From photometer number')
     parser_all.add_argument('-t', '--to', type=int, required=True, help='To photometer number')
     parser_all.add_argument('-s', '--since',  type=vmonth, required=True, metavar='<YYYY-MM>', help='Year and Month')
     parser_all.add_argument('-u', '--until',  type=vmonth, default=now(), metavar='<YYYY-MM>', help='Year and Month (defaults to current month)')
+    parser_all.add_argument('-c', '--concurrent', type=int, metavar='<N>', choices=[1,2,3,4], default=4, help='Number of concurrent downloads (defaults to %(default)s)')
     return parser
 
 # ================    
