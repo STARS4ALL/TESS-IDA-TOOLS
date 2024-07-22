@@ -28,10 +28,12 @@ classifiers = [
 ]
 dependencies = [
   'typing-extensions', # Self for Python < 3.11
-  'python-decouple',  # Get info from enviromental variables
-  'requests',         # handle HTTP requests
+  'python-decouple',   # Get info from enviromental variables
   'python-dateutil',   # date utilities
-  'lica@git+https://github.com/guaix-ucm/lica@main',
+  'aiofiles',          # Asyncio support for file I/O
+  'aiohttp',
+  'aiodns',
+  'lica@git+https://github.com/guaix-ucm/lica@main', # own assorted utilities
 ]
 
 [project.optional-dependencies]
