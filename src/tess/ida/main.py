@@ -65,6 +65,13 @@ def mkdir(name: str, filename: str, base_dir: str | None) -> str:
     return os.path.join(dir_path, filename)
 
 
+def daterange(from_month: datetime.datetime, to_month: datetime.datetime) -> str:
+    month = from_month
+    while month <=  to_month:
+        yield month.strftime('%Y-%m')
+        month += relativedelta(months=1)
+
+
 async def do_ida_single_month(session, base_url: str, name: str, month: str, specific: bool = False) -> None:
     url = base_url + '/download'
     target_file = name + '_' + month + '.dat' if not specific else month
@@ -90,25 +97,25 @@ async def ida_single_month(base_url: str, args) -> None:
             month = args.month.strftime('%Y-%m')
             await do_ida_single_month(session, base_url, name, month)
 
+
 async def ida_year(base_url: str, args) -> None:
     year = args.year.replace(month=1, day=1)
     name = args.name
     async with aiohttp.ClientSession() as session:
         for grp in grouper(4, range(0,12)):
-            log.info("Dealing with months %s",grp)
             tasks = [asyncio.create_task(do_ida_single_month(session, base_url, name, 
                 (year + relativedelta(months=m)).strftime('%Y-%m'))) for m in grp]
             await asyncio.gather(*tasks)
 
 
-def ida_since(base_url: str, args) -> None:
+async def ida_since(base_url: str, args) -> None:
     name = args.name
-    M1 = args.since
-    M2 = args.until
-    while M1 <=  M2:
-        cur_month = M1.strftime('%Y-%m')
-        do_ida_single_month(base_url, name, cur_month)
-        M1 += relativedelta(months=1)
+    log.info("month_list %s", month_list)
+    async with aiohttp.ClientSession() as session:
+        for grp in grouper(4, daterange(args.since, args.until)):
+            tasks = [asyncio.create_task(do_ida_single_month(session, base_url, name, m)) for m in grp]
+            await asyncio.gather(*tasks)
+
 
 def ida_all(base_url: str, args) -> None:
     S1 = args.from_var
