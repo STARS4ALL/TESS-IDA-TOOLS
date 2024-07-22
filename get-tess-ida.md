@@ -3,21 +3,43 @@ Get TESS-W IDA monthly files from NextCloud server
 
 # Instalation and dependencies
 
-1. Download the [get-tess-ida.py script](https://raw.githubusercontent.com/STARS4ALL/TESS-IDA-TOOLS/main/get-tess-ida.py) from the GitHub repository:
-
-
-2. Create a Python viryual environment (***highly recommended***) and activate it :
+There are two versions of this tool, the simples one is a self contained script called ***get-tess-ida.py***) which just downloads the data files
+The other one is a full package, bundled other analysis tools (*being developed at the moment*).
+For both versions, it is ***highly recommended*** to create a virtual environment and activate is:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-3. Install the following packages in the virtual environment:
+## Simple Script installation
+
+1. Download the [get-tess-ida.py script](https://raw.githubusercontent.com/STARS4ALL/TESS-IDA-TOOLS/main/get-tess-ida.py) from the GitHub repository:
+
+3. Install the following packages in the virtual environment previously created:
 
 ```bash
 pip install python-decouple python-dateutil requests
 ```
+
+## Package installation
+
+1. Download the full package from GitHub.
+There are several ways to do it, either cloning the github repo for the latest development evrsions or use a previous packaged version
+
+
+```bash
+git clone https://github.com/STARS4ALL/TESS-IDA-TOOLS.git
+```
+
+2. Install the package in the virtual envirnment previously created:
+
+
+```bash
+pip install .
+```
+
+## Additional configuartion for bosth version 
 
 4. Make an env file caled `.env` (Mac/Linux) or settings.ini (Windows) containing an enviromental variable
 
