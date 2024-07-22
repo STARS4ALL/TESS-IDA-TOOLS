@@ -50,6 +50,7 @@ Repository = "https://github.com/STARS4ALL/TESS-IDA-TOOLS.git"
 [project.scripts]
 
 get-tess-ida = "tess.ida.download:main"
+to-ecsv-ida = "tess.ida.ecsv:main"
 
 # pyproject.toml
 # Automatically generates a _version-py file from with Git information
