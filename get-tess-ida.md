@@ -41,7 +41,7 @@ pip install .
 
 ## Additional configuartion for bosth version 
 
-4. Make an env file caled `.env` (Mac/Linux) or settings.ini (Windows) containing an enviromental variable
+1. Make an env file caled `.env` (Mac/Linux) or settings.ini (Windows) containing an enviromental variable
 
 .env file:
 
