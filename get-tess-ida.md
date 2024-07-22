@@ -3,7 +3,7 @@ Get TESS-W IDA monthly files from NextCloud server
 
 # Instalation and dependencies
 
-1. Download the [get-tess-ida.py script]() from the GitHub repository:
+1. Download the [get-tess-ida.py script](https://raw.githubusercontent.com/STARS4ALL/TESS-IDA-TOOLS/main/get-tess-ida.py) from the GitHub repository:
 
 
 2. Create a Python viryual environment (***highly recommended***) and activate it :
@@ -88,7 +88,7 @@ python get-tess-ida.py --console month --name stars1 --month 2023-4
 python get-tess-ida.py --console month --name stars4 --exact stars4_2016-09_2.dat
 ```
 
-3. Dowunload a whole year for a given photometer
+3. Download a whole year for a given photometer
 ```bash
 python get-tess-ida.py --console year --name stars1 --year 2023
 ```
