@@ -152,7 +152,7 @@ def add_args(parser):
     parser_since.add_argument('-s', '--since',  type=vmonth, required=True, metavar='<YYYY-MM>', help='Year and Month')
     parser_since.add_argument('-u', '--until',  type=vmonth, default=now(), metavar='<YYYY-MM>', help='Year and Month (defaults to current month)')
     parser_since.add_argument('-o', '--out-dir', type=str, default=None, help='Output base directory')
-    parser_since.add_argument('-c', '--concurrent', type=int, metavar='<N>', choices=[1,2,3,4], default=4, help='Number of concurrent downloads (defaults to %(default)s)')
+    parser_since.add_argument('-c', '--concurrent', type=int, metavar='<N>', choices=[1,2,4,6,8], default=4, help='Number of concurrent downloads (defaults to %(default)s)')
     parser_all = subparser.add_parser('all', help='Download all photometers from a given month until another')
     parser_all.add_argument('-f', '--from', dest='from_var', type=int, required=True, help='From photometer number')
     parser_all.add_argument('-t', '--to', type=int, required=True, help='To photometer number')
