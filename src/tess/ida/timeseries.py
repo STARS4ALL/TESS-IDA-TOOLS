@@ -30,20 +30,20 @@ from astroplan import Observer
 
 from dateutil.relativedelta import relativedelta
 from lica.cli import execute
-from lica.validators import vfile
+from lica.validators import vfile, vmonth
 
 #--------------
 # local imports
 # -------------
 
 from .. import __version__
+from .constants import TW, T4C, IDA_HEADER_LEN
 
 # ----------------
 # Module constants
 # ----------------
 
 DESCRIPTION = "Transform TESS-W IDA monthly files to ECSV"
-IDA_HEADER_LEN = 35
 
 # Column names
 IDA_NAMES = ('UTC Date & Time', 'Local Date & Time', 'Enclosure Temperature', 'Sky Temperature', 'Frequency', 'MSAS', 'ZP', 'Sequence Number')
@@ -215,7 +215,8 @@ def to_ecsv_single(path: str, out_dir: str) -> None:
     log.info("Saving Time Series to ECSV file: %s", path)
     table.write(path, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
    
-
+def to_ecsv_range(in_dir: str, out_dir: str, since: datetime, until: datetime) -> None:
+    pass
 
 # ================================
 # COMMAND LINE INTERFACE FUNCTIONS
@@ -227,18 +228,44 @@ def cli_to_ecsv_single(args: Namespace) -> None:
         out_dir = args.out_dir,
     )
 
+def cli_to_ecsv_range(args: Namespace) -> None:
+    to_ecsv_range(
+        in_dir = args.input_dir,
+        out_dir = args.out_dir,
+        since = args.since,
+        until = args.until,
+    )
+
+from .constants import TW, T4C
+
+def cli_foo(args: Namespace) -> None:
+    log.info(TW.values())
+   
+
+
 
 def add_args(parser):
      # Now parse the application specific parts
     subparser = parser.add_subparsers(dest='command')
-    parse_single = subparser.add_parser('single', help='Transform single IDA monthly file to ECSV')
+    parse_single = subparser.add_parser('month', help='Transform single IDA monthly file to ECSV')
     parse_single.add_argument('-i', '--input-file', type=vfile, required=True, help='Input IDA file')
     parse_single.add_argument('-o', '--out-dir', type=str, default=None, help='Output base directory')
+
+    parse_range = subparser.add_parser('range', help='Transform a range of IDA monthly files into a single ECSV')
+    parse_range.add_argument('-i', '--input-dir', type=vfile, required=True, help='Input IDA file')
+    parse_range.add_argument('-s', '--since',  type=vmonth, required=True, metavar='<YYYY-MM>', help='Year and Month')
+    parse_range.add_argument('-u', '--until',  type=vmonth, default=now(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s)')
+    parse_range.add_argument('-o', '--out-dir', type=str, default=None, help='Output base directory')
+    
+    parse_foo = subparser.add_parser('foo', help='Foo Parser')
+
     return parser
 
 
 CMD_TABLE = {
-    'single': cli_to_ecsv_single,
+    'month': cli_to_ecsv_single,
+    'range': cli_to_ecsv_range,
+    'foo': cli_foo,
 }
 
 def cli_to_ecsv(args: Namespace) -> None:

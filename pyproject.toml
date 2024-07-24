@@ -28,6 +28,7 @@ classifiers = [
 ]
 dependencies = [
   'typing-extensions', # Self for Python < 3.11
+  'StrEnum',           # String Enums for Python < 3.11
   'python-decouple',   # Get info from enviromental variables
   'python-dateutil',   # date utilities
   'tomli',             # TOML reader for Python < 3.11

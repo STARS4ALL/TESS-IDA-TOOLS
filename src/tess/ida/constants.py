@@ -8,9 +8,11 @@
 # Standard Python imports
 # -----------------------
 
-from enum import Enum
+from strenum import StrEnum
 
-class BaseEnum(Enum):
+IDA_HEADER_LEN = 35
+
+class BaseEnum(StrEnum):
     @classmethod
     def values(cls):
         return [member.value for _, member in cls.__members__.items()]
