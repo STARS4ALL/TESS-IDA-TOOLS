@@ -134,10 +134,12 @@ def ida_metadata(path):
 def to_table(path: str) -> QTable:
     log.info("Reading IDA file: %s", os.path.basename(path))
     header = ida_metadata(path)
-    table = QTable.read(path, format='ascii.basic', delimiter=';', names=IDA_NAMES, exclude_names=IDA_EXCLUDE, converters=IDA_DATA_TYPES, guess=False)
+    table = QTable.read(path, format='ascii.basic', delimiter=';', data_start=0, names=IDA_NAMES, exclude_names=IDA_EXCLUDE, converters=IDA_DATA_TYPES, guess=False)
     table.meta['ida'] = header
     del table.meta['comments']
     # Convert to quiatities by adding units
+    log.debug("Converting 'UTC Date & Time' column datatype to astropy Time")
+    table['UTC Date & Time'] = Time(table['UTC Date & Time'], scale='utc')
     table['Frequency'] = table['Frequency'] * u.Hz
     table['Enclosure Temperature'] = table['Enclosure Temperature'] * u.deg_C
     table['Sky Temperature'] = table['Sky Temperature'] * u.deg_C
@@ -152,10 +154,7 @@ def add_columns(table: QTable) -> None:
     obs_name = table.meta['ida']['Data supplier']['observer']
     location = EarthLocation(lat=latitude, lon=longitude, height=height)
     observer = Observer(name=obs_name, location=location)
-    log.debug("Converting 'UTC Date & Time' column datatype to astropy Time")
-    table['UTC Date & Time'] = Time(table['UTC Date & Time'], scale='utc', location=location)
-    log.debug("Adding new 'Julian Date' column")
-    table['Julian Date'] = table['UTC Date & Time'].jd
+    
     log.debug("Adding new 'Sun Alt' column")
     table['Sun Alt']   = observer.sun_altaz(table['UTC Date & Time']).alt.deg * u.deg
     log.debug("Adding new 'Moon Alt' column")
