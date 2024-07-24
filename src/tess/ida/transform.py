@@ -135,12 +135,20 @@ def ida_metadata(path):
 
 def to_table(path: str) -> Table:
     header = ida_metadata(path)
-    table = ascii.read(path, delimiter=';', names=IDA_NAMES, exclude_names=IDA_EXCLUDE, converters=IDA_DATA_TYPES, guess=False)
+    table = ascii.read(path, delimiter=';', format='basic', names=IDA_NAMES, exclude_names=IDA_EXCLUDE, converters=IDA_DATA_TYPES, guess=False)
     table.meta['ida'] = header
     del table.meta['comments']
     return table
 
-def add_columns(table: Table) -> None:
+def to_table(path: str) -> QTable:
+    log.info("Reading IDA file: %s", os.path.basename(path))
+    header = ida_metadata(path)
+    table = QTable.read(path, format='ascii.basic', delimiter=';', names=IDA_NAMES, exclude_names=IDA_EXCLUDE, converters=IDA_DATA_TYPES, guess=False)
+    table.meta['ida'] = header
+    del table.meta['comments']
+    return table
+
+def add_columns(table: QTable) -> None:
     latitude = table.meta['ida']['Position']['latitude']
     longitude = table.meta['ida']['Position']['longitude']
     height = table.meta['ida']['Position']['height']
@@ -166,9 +174,9 @@ def add_columns(table: Table) -> None:
 def to_ecsv_single(path: str, out_dir: str) -> None:
     table = to_table(path)
     add_columns(table)
-    log.info("\n%s",table)
+    log.info("\n%s",table.info)
     path = output_path(path, out_dir)
-    ascii.write(table, output=path, format='ecsv', delimiter=',', fast_writer=True, overwrite=True)
+    table.write(path, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
    
 
 
