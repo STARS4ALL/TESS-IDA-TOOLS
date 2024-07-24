@@ -46,11 +46,22 @@ from .. import __version__
 
 DESCRIPTION = "Transform TESS-W IDA monthly files to ECSV"
 IDA_HEADER_LEN = 35
-IDA_NAMES = ('UTC Date & Time', 'Local Date & Time', 'Enclosure Temperature', 'Sky Temperature', 'Frequency', 'MSAS', 'ZP', 'Sequence Number')
-IDA_EXCLUDE = ('Local Date & Time',)
-IDA_DATA_TYPES = {'UTC Date & Time': str, 'Local Date & Time': str, 'Enclosure Temperature': float, 
-    'Sky Temperature': float, 'Frequency': float, 'MSAS': float, 'ZP': float, 'Sequence Number': int}
 
+# Column names
+IDA_NAMES = ('UTC Date & Time', 'Local Date & Time', 'Enclosure Temperature', 'Sky Temperature', 'Frequency', 'MSAS', 'ZP', 'Sequence Number')
+IDA_NAMES_4C = ('UTC Date & Time', 'Local Date & Time', 'Enclosure Temperature', 'Sky Temperature', 
+    'Freq1', 'MSAS1', 'ZP1', 'Freq2', 'MSAS2', 'ZP2', 'Freq3',  'MSAS3', 'ZP3', 'Freq4', 'MSAS4', 'ZP4', 'Sequence Number')
+
+# data types for column names
+IDA_DTYPES = {'UTC Date & Time': str, 'Local Date & Time': str, 'Enclosure Temperature': float, 
+    'Sky Temperature': float, 'Frequency': float, 'MSAS': float, 'ZP': float, 'Sequence Number': int}
+IDA_DTYPES_4C = {'UTC Date & Time': str, 'Local Date & Time': str, 'Enclosure Temperature': float, 'Sky Temperature': float, 
+    'Freq1': float, 'MSAS1': float, 'ZP1': float, 'Freq2': float, 'MSAS2': float, 'ZP2': float,
+    'Freq3': float, 'MSAS3': float, 'ZP3': float, 'Freq4': float, 'MSAS4': float, 'ZP4': float,
+    'Sequence Number': int}
+
+# Exclude these columns from the final Table
+IDA_EXCLUDE = ('Local Date & Time',)
 
 # -----------------------
 # Module global variables
@@ -130,16 +141,26 @@ def ida_metadata(path):
     latitude, longitude, height = header['Position'].split(',')
     header['Position'] = {'latitude': float(latitude), 'longitude': float(longitude), 'height': float(height)}
     return header
-   
-def to_table(path: str) -> QTable:
+
+from astropy.timeseries import TimeSeries   
+def to_table(path: str) -> TimeSeries:
     log.info("Reading IDA file: %s", os.path.basename(path))
     header = ida_metadata(path)
-    table = QTable.read(path, format='ascii.basic', delimiter=';', data_start=0, names=IDA_NAMES, exclude_names=IDA_EXCLUDE, converters=IDA_DATA_TYPES, guess=False)
+    names = IDA_NAMES if header['Number of channels'] == 1 else IDA_NAMES_4C
+    converters = IDA_DTYPES if header['Number of channels'] == 1 else IDA_DTYPES_4C
+    table = TimeSeries.read(path, 
+        time_column   = IDA_NAMES[0], 
+        format        ='ascii.basic', 
+        delimiter     = ';', 
+        data_start    = 0, 
+        names         = names, 
+        exclude_names = IDA_EXCLUDE, 
+        converters    = converters, 
+        guess=False
+    )
     table.meta['ida'] = header
     del table.meta['comments']
     # Convert to quiatities by adding units
-    log.debug("Converting 'UTC Date & Time' column datatype to astropy Time")
-    table['UTC Date & Time'] = Time(table['UTC Date & Time'], scale='utc')
     table['Frequency'] = table['Frequency'] * u.Hz
     table['Enclosure Temperature'] = table['Enclosure Temperature'] * u.deg_C
     table['Sky Temperature'] = table['Sky Temperature'] * u.deg_C
@@ -155,11 +176,11 @@ def add_columns(table: QTable) -> None:
     location = EarthLocation(lat=latitude, lon=longitude, height=height)
     observer = Observer(name=obs_name, location=location)
     log.debug("Adding new 'Sun Alt' column")
-    table['Sun Alt']   = observer.sun_altaz(table['UTC Date & Time']).alt.deg * u.deg
+    table['Sun Alt']   = observer.sun_altaz(table['time']).alt.deg * u.deg
     log.debug("Adding new 'Moon Alt' column")
-    table['Moon Alt']   = observer.moon_altaz(table['UTC Date & Time']).alt.deg * u.deg
+    table['Moon Alt']   = observer.moon_altaz(table['time']).alt.deg * u.deg
     log.debug("Adding new 'Moon Phase' column")
-    table['Moon Phase'] = observer.moon_phase(table['UTC Date & Time']) / (np.pi * u.rad)
+    table['Moon Phase'] = observer.moon_phase(table['time']) / (np.pi * u.rad)
   
     
 # ===========
