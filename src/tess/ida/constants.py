@@ -7,8 +7,10 @@
 #------------------------
 # Standard Python imports
 # -----------------------
-
-from strenum import StrEnum
+try:
+    from enum import StrEnum  # from Python 3.11 on
+except:
+    from strenum import StrEnum
 
 
 # -------------------------
