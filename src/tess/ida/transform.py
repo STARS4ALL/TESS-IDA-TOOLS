@@ -115,7 +115,7 @@ def daterange(from_month: datetime, to_month: datetime) -> str:
 
 def ida_metadata(path):
     # Reads the whole header, strips off the starting '# ' and trailing '\n'
-    with open('stars1/stars1_2024-01.dat') as f:
+    with open(path) as f:
         lines = [next(f)[2:-1] for _ in range(IDA_HEADER_LEN)]
     lines = lines[:-13] # Strips off the last 13 lines (including comments)
     # make  key-value pairs
@@ -127,12 +127,6 @@ def ida_metadata(path):
     # Convert values from strings to numeric values or nested dictonaries
     header['Number of header lines'] = int(header['Number of header lines'])
     header['Number of channels'] = int(header['Number of channels'])
-    header['Field of view'] = float(header['Field of view'])
-    header['Number of fields per line'] = int(header['Number of fields per line'])
-    header['TESS cover offset value'] = float(header['TESS cover offset value'])
-    header['TESS zero point'] = float(header['TESS zero point'])
-    az, zen = header['Measurement direction per channel'][1:-1].split(',')
-    header['Measurement direction per channel'] = {'azimuth': float(az), 'zenital': float(zen)}
     observer, affil = header['Data supplier'].split('/')
     header['Data supplier'] = {'observer': v_or_n(observer), 'affiliation':v_or_n(affil)}
     place, town, sub_region, region, country = header['Location name'].split('/')
@@ -140,14 +134,32 @@ def ida_metadata(path):
      'sub_region': v_or_n(sub_region), 'region': v_or_n(region), 'country': v_or_n(country)}
     latitude, longitude, height = header['Position'].split(',')
     header['Position'] = {'latitude': float(latitude), 'longitude': float(longitude), 'height': float(height)}
+    header['Field of view'] = float(header['Field of view'])
+    header['TESS cover offset value'] = float(header['TESS cover offset value'])
+    header['Number of fields per line'] = int(header['Number of fields per line'])
+    if header['Number of channels'] == 1:
+        assert header['Number of fields per line'] == 8
+        header['TESS zero point'] = float(header['TESS zero point'])
+        az, zen = header['Measurement direction per channel'][1:-1].split(',')
+        header['Measurement direction per channel'] = {'azimuth': float(az), 'zenital': float(zen)}
+    else:
+        assert header['Number of channels'] == 4
+        assert header['Number of fields per line'] == 17
+        header['Filters per channel'] = [f.strip()[1:-1] for f in header['Filters per channel'][1:-1].split(',')]
+        header['TESS zero point'] = [float(zp) for zp in header['TESS zero point'][1:-1].split(',')]
+        az1, zen1, az2, zen2, az3, zen3, az4, zen4 = header['Measurement direction per channel'][1:-1].split(',')
+        header['Measurement direction per channel'] = [{'azimuth': float(az1), 'zenital': float(zen1)},
+            {'azimuth': float(az2), 'zenital': float(zen2)}, {'azimuth': float(az3), 'zenital': float(zen3)},
+            {'azimuth': float(az4), 'zenital': float(zen4)}]
     return header
 
 from astropy.timeseries import TimeSeries   
 def to_table(path: str) -> TimeSeries:
-    log.info("Reading IDA file: %s", os.path.basename(path))
+    log.info("Reading IDA file: %s", path)
     header = ida_metadata(path)
-    names = IDA_NAMES if header['Number of channels'] == 1 else IDA_NAMES_4C
-    converters = IDA_DTYPES if header['Number of channels'] == 1 else IDA_DTYPES_4C
+    nchannels = header['Number of channels']
+    names = IDA_NAMES if nchannels == 1 else IDA_NAMES_4C
+    converters = IDA_DTYPES if nchannels == 1 else IDA_DTYPES_4C
     table = TimeSeries.read(path, 
         time_column   = IDA_NAMES[0], 
         format        ='ascii.basic', 
@@ -161,10 +173,20 @@ def to_table(path: str) -> TimeSeries:
     table.meta['ida'] = header
     del table.meta['comments']
     # Convert to quiatities by adding units
-    table['Frequency'] = table['Frequency'] * u.Hz
     table['Enclosure Temperature'] = table['Enclosure Temperature'] * u.deg_C
     table['Sky Temperature'] = table['Sky Temperature'] * u.deg_C
-    table['MSAS'] = table['MSAS'] * u.mag(u.Hz)
+    if nchannels == 1:
+        table['Frequency'] = table['Frequency'] * u.Hz
+        table['MSAS'] = table['MSAS'] * u.mag(u.Hz)
+    else:
+        table['Freq1'] = table['Freq1'] * u.Hz
+        table['MSAS1'] = table['MSAS1'] * u.mag(u.Hz)
+        table['Freq2'] = table['Freq2'] * u.Hz
+        table['MSAS2'] = table['MSAS2'] * u.mag(u.Hz)
+        table['Freq3'] = table['Freq3'] * u.Hz
+        table['MSAS3'] = table['MSAS3'] * u.mag(u.Hz)
+        table['Freq4'] = table['Freq4'] * u.Hz
+        table['MSAS4'] = table['MSAS4'] * u.mag(u.Hz)
     return table
 
 def add_columns(table: QTable) -> None:
