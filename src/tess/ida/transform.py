@@ -61,6 +61,7 @@ IDA_DTYPES_4C = {'UTC Date & Time': str, 'Local Date & Time': str, 'Enclosure Te
 # Exclude these columns from the final Table
 IDA_EXCLUDE = ('Local Date & Time',)
 
+
 # -----------------------
 # Module global variables
 # -----------------------
@@ -153,7 +154,7 @@ def ida_metadata(path):
 
   
 def to_table(path: str) -> TimeSeries:
-    log.info("Reading IDA file: %s", path)
+    log.info("Creating a Time Series from IDA file: %s", path)
     header = ida_metadata(path)
     nchannels = header['Number of channels']
     names = IDA_NAMES if nchannels == 1 else IDA_NAMES_4C
@@ -188,7 +189,7 @@ def to_table(path: str) -> TimeSeries:
     return table
 
 def add_columns(table: TimeSeries) -> None:
-    log.info("Transforming table")
+    log.info("Adding Sun/Moon data to Time Series")
     latitude = table.meta['ida']['Position']['latitude']
     longitude = table.meta['ida']['Position']['longitude']
     height = table.meta['ida']['Position']['height']
@@ -210,10 +211,8 @@ def add_columns(table: TimeSeries) -> None:
 def to_ecsv_single(path: str, out_dir: str) -> None:
     table = to_table(path)
     add_columns(table)
-    log.info("\n%s",table)
-    log.info("\n%s",table.info)
     path = output_path(path, out_dir)
-    log.info("Writting ECSV file: %s", path)
+    log.info("Saving Time Series to ECSV file: %s", path)
     table.write(path, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
    
 
