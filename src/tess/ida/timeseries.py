@@ -9,8 +9,6 @@
 # ----------------------
 
 import os
-import sys
-import asyncio
 import logging
 import itertools
 
@@ -22,9 +20,9 @@ from argparse import Namespace
 # -------------------
 
 import numpy as np
+
 import astropy.units as u
 from astropy.timeseries import TimeSeries 
-
 from astropy.coordinates import EarthLocation
 from astroplan import Observer
 
@@ -37,7 +35,7 @@ from lica.validators import vfile, vmonth
 # -------------
 
 from .. import __version__
-from .constants import TW, T4C, IDA_HEADER_LEN
+from .constants import TEW, T4C, IKW, TS, IDA_HEADER_LEN
 
 # ----------------
 # Module constants
@@ -46,20 +44,19 @@ from .constants import TW, T4C, IDA_HEADER_LEN
 DESCRIPTION = "Transform TESS-W IDA monthly files to ECSV"
 
 # Column names
-IDA_NAMES = ('UTC Date & Time', 'Local Date & Time', 'Enclosure Temperature', 'Sky Temperature', 'Frequency', 'MSAS', 'ZP', 'Sequence Number')
-IDA_NAMES_4C = ('UTC Date & Time', 'Local Date & Time', 'Enclosure Temperature', 'Sky Temperature', 
-    'Freq1', 'MSAS1', 'ZP1', 'Freq2', 'MSAS2', 'ZP2', 'Freq3',  'MSAS3', 'ZP3', 'Freq4', 'MSAS4', 'ZP4', 'Sequence Number')
+IDA_NAMES = TEW.values()
+IDA_NAMES_4C = T4C.values()
 
 # data types for column names
-IDA_DTYPES = {'UTC Date & Time': str, 'Local Date & Time': str, 'Enclosure Temperature': float, 
-    'Sky Temperature': float, 'Frequency': float, 'MSAS': float, 'ZP': float, 'Sequence Number': int}
-IDA_DTYPES_4C = {'UTC Date & Time': str, 'Local Date & Time': str, 'Enclosure Temperature': float, 'Sky Temperature': float, 
-    'Freq1': float, 'MSAS1': float, 'ZP1': float, 'Freq2': float, 'MSAS2': float, 'ZP2': float,
-    'Freq3': float, 'MSAS3': float, 'ZP3': float, 'Freq4': float, 'MSAS4': float, 'ZP4': float,
+IDA_DTYPES = {TEW.UTC_TIME: str, TEW.LOCAL_TIME: str, TEW.BOX_TEMP: float, 
+    TEW.SKY_TEMP: float, TEW.FREQ1: float, TEW.MAG1: float, TEW.ZP1: float, TEW.SEQ_NUM: int}
+IDA_DTYPES_4C = {T4C.UTC_TIME: str, T4C.LOCAL_TIME: str,  T4C.BOX_TEMP: float, T4C.SKY_TEMP: float, 
+    T4C.FREQ1: float, T4C.MAG1: float, T4C.ZP1: float, T4C.FREQ2: float, T4C.MAG2: float, T4C.ZP2: float,
+    T4C.FREQ3: float, T4C.MAG3: float, T4C.ZP3: float, T4C.FREQ4: float, T4C.MAG4: float, T4C.ZP4: float,
     'Sequence Number': int}
 
 # Exclude these columns from the final Table
-IDA_EXCLUDE = ('Local Date & Time',)
+IDA_EXCLUDE = (TEW.LOCAL_TIME,)
 
 
 # -----------------------
@@ -120,34 +117,34 @@ def ida_metadata(path):
     # make  key-value pairs
     pairs = [line.split(': ') for line in lines]
     pairs = list(filter(lambda x: len(x) == 2, pairs))
-    pairs[2][0] = 'License' # keyword is too long ...
+    pairs[2][0] = str(IKW.LICENSE)   # patch it, real keyword is too long ...
     # Make a dict out of (keyword, value) pairs
     header = dict(pairs)
     # Convert values from strings to numeric values or nested dictonaries
-    header['Number of header lines'] = int(header['Number of header lines'])
-    header['Number of channels'] = int(header['Number of channels'])
-    observer, affil = header['Data supplier'].split('/')
-    header['Data supplier'] = {'observer': v_or_n(observer), 'affiliation':v_or_n(affil)}
-    place, town, sub_region, region, country = header['Location name'].split('/')
-    header['Location name'] = {'place': v_or_n(place), 'town': v_or_n(town), 
+    header[IKW.NUM_HEADERS] = int(header[IKW.NUM_HEADERS])
+    header[IKW.NUM_CHANNELS] = int(header[IKW.NUM_CHANNELS])
+    observer, affil = header[IKW.OBSERVER].split('/')
+    header[IKW.OBSERVER] = {'observer': v_or_n(observer), 'affiliation':v_or_n(affil)}
+    place, town, sub_region, region, country = header[IKW.LOCATION].split('/')
+    header[IKW.LOCATION] = {'place': v_or_n(place), 'town': v_or_n(town), 
      'sub_region': v_or_n(sub_region), 'region': v_or_n(region), 'country': v_or_n(country)}
-    latitude, longitude, height = header['Position'].split(',')
-    header['Position'] = {'latitude': float(latitude), 'longitude': float(longitude), 'height': float(height)}
-    header['Field of view'] = float(header['Field of view'])
-    header['TESS cover offset value'] = float(header['TESS cover offset value'])
-    header['Number of fields per line'] = int(header['Number of fields per line'])
-    if header['Number of channels'] == 1:
-        assert header['Number of fields per line'] == 8
-        header['TESS zero point'] = float(header['TESS zero point'])
-        az, zen = header['Measurement direction per channel'][1:-1].split(',')
-        header['Measurement direction per channel'] = {'azimuth': float(az), 'zenital': float(zen)}
+    latitude, longitude, height = header[IKW.POSITION].split(',')
+    header[IKW.POSITION] = {'latitude': float(latitude), 'longitude': float(longitude), 'height': float(height)}
+    header[IKW.FOV] = float(header[IKW.FOV])
+    header[IKW.COVER_OFFSET] = float(header[IKW.COVER_OFFSET])
+    header[IKW.NUM_COLS] = int(header[IKW.NUM_COLS])
+    if header[IKW.NUM_CHANNELS] == 1:
+        assert header[IKW.NUM_COLS] == 8
+        header[IKW.ZP] = float(header[IKW.ZP])
+        az, zen = header[IKW.AIM][1:-1].split(',')
+        header[IKW.AIM] = {'azimuth': float(az), 'zenital': float(zen)}
     else:
-        assert header['Number of channels'] == 4
-        assert header['Number of fields per line'] == 17
+        assert header[IKW.NUM_CHANNELS] == 4
+        assert header[IKW.NUM_COLS] == 17
         header['Filters per channel'] = [f.strip()[1:-1] for f in header['Filters per channel'][1:-1].split(',')]
-        header['TESS zero point'] = [float(zp) for zp in header['TESS zero point'][1:-1].split(',')]
-        az1, zen1, az2, zen2, az3, zen3, az4, zen4 = header['Measurement direction per channel'][1:-1].split(',')
-        header['Measurement direction per channel'] = [{'azimuth': float(az1), 'zenital': float(zen1)},
+        header[IKW.ZP] = [float(zp) for zp in header[IKW.ZP][1:-1].split(',')]
+        az1, zen1, az2, zen2, az3, zen3, az4, zen4 = header[IKW.AIM][1:-1].split(',')
+        header[IKW.AIM] = [{'azimuth': float(az1), 'zenital': float(zen1)},
             {'azimuth': float(az2), 'zenital': float(zen2)}, {'azimuth': float(az3), 'zenital': float(zen3)},
             {'azimuth': float(az4), 'zenital': float(zen4)}]
     return header
@@ -156,7 +153,7 @@ def ida_metadata(path):
 def to_table(path: str) -> TimeSeries:
     log.info("Creating a Time Series from IDA file: %s", path)
     header = ida_metadata(path)
-    nchannels = header['Number of channels']
+    nchannels = header[IKW.NUM_CHANNELS]
     names = IDA_NAMES if nchannels == 1 else IDA_NAMES_4C
     converters = IDA_DTYPES if nchannels == 1 else IDA_DTYPES_4C
     table = TimeSeries.read(path, 
@@ -172,36 +169,36 @@ def to_table(path: str) -> TimeSeries:
     table.meta['ida'] = header
     del table.meta['comments']
     # Convert to quiatities by adding units
-    table['Enclosure Temperature'] = table['Enclosure Temperature'] * u.deg_C
-    table['Sky Temperature'] = table['Sky Temperature'] * u.deg_C
+    table[TEW.BOX_TEMP] = table[TEW.BOX_TEMP] * u.deg_C
+    table[TEW.SKY_TEMP] = table[TEW.SKY_TEMP] * u.deg_C
     if nchannels == 1:
-        table['Frequency'] = table['Frequency'] * u.Hz
-        table['MSAS'] = table['MSAS'] * u.mag(u.Hz)
+        table[TEW.FREQ1] = table[TEW.FREQ1] * u.Hz
+        table[TEW.MAG1]  = table[TEW.MAG1] * u.mag(u.Hz)
     else:
-        table['Freq1'] = table['Freq1'] * u.Hz
-        table['MSAS1'] = table['MSAS1'] * u.mag(u.Hz)
-        table['Freq2'] = table['Freq2'] * u.Hz
-        table['MSAS2'] = table['MSAS2'] * u.mag(u.Hz)
-        table['Freq3'] = table['Freq3'] * u.Hz
-        table['MSAS3'] = table['MSAS3'] * u.mag(u.Hz)
-        table['Freq4'] = table['Freq4'] * u.Hz
-        table['MSAS4'] = table['MSAS4'] * u.mag(u.Hz)
+        table[T4C.FREQ1] = table[T4C.FREQ1] * u.Hz
+        table[T4C.MAG1] = table[T4C.MAG1] * u.mag(u.Hz)
+        table[T4C.FREQ2] = table[T4C.FREQ2] * u.Hz
+        table[T4C.MAG2] = table[T4C.MAG2] * u.mag(u.Hz)
+        table[T4C.FREQ3] = table[T4C.FREQ3] * u.Hz
+        table[T4C.MAG3] = table[T4C.MAG3] * u.mag(u.Hz)
+        table[T4C.FREQ4] = table[T4C.FREQ4] * u.Hz
+        table[T4C.MAG4] = table[T4C.MAG4] * u.mag(u.Hz)
     return table
 
 def add_columns(table: TimeSeries) -> None:
     log.info("Adding Sun/Moon data to Time Series")
-    latitude = table.meta['ida']['Position']['latitude']
-    longitude = table.meta['ida']['Position']['longitude']
-    height = table.meta['ida']['Position']['height']
-    obs_name = table.meta['ida']['Data supplier']['observer']
+    latitude = table.meta['ida'][IKW.POSITION]['latitude']
+    longitude = table.meta['ida'][IKW.POSITION]['longitude']
+    height = table.meta['ida'][IKW.POSITION]['height']
+    obs_name = table.meta['ida'][IKW.OBSERVER]['observer']
     location = EarthLocation(lat=latitude, lon=longitude, height=height)
     observer = Observer(name=obs_name, location=location)
-    log.debug("Adding new 'Sun Alt' column")
-    table['Sun Alt']   = observer.sun_altaz(table['time']).alt.deg * u.deg
-    log.debug("Adding new 'Moon Alt' column")
-    table['Moon Alt']   = observer.moon_altaz(table['time']).alt.deg * u.deg
-    log.debug("Adding new 'Moon Phase' column")
-    table['Moon Phase'] = observer.moon_phase(table['time']) / (np.pi * u.rad)
+    log.debug("Adding new %s column", TS.SUN_ALT)
+    table[TS.SUN_ALT]   = observer.sun_altaz(table['time']).alt.deg * u.deg
+    log.debug("Adding new %s column", TS.MOON_ALT)
+    table[TS.MOON_ALT]   = observer.moon_altaz(table['time']).alt.deg * u.deg
+    log.debug("Adding new %s column", TS.MOON_PHASE)
+    table[TS.MOON_PHASE] = observer.moon_phase(table['time']) / (np.pi * u.rad)
   
     
 # ===========
@@ -235,14 +232,7 @@ def cli_to_ecsv_range(args: Namespace) -> None:
         since = args.since,
         until = args.until,
     )
-
-from .constants import TW, T4C
-
-def cli_foo(args: Namespace) -> None:
-    log.info(TW.values())
    
-
-
 
 def add_args(parser):
      # Now parse the application specific parts
@@ -256,8 +246,6 @@ def add_args(parser):
     parse_range.add_argument('-s', '--since',  type=vmonth, required=True, metavar='<YYYY-MM>', help='Year and Month')
     parse_range.add_argument('-u', '--until',  type=vmonth, default=now(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s)')
     parse_range.add_argument('-o', '--out-dir', type=str, default=None, help='Output base directory')
-    
-    parse_foo = subparser.add_parser('foo', help='Foo Parser')
 
     return parser
 
@@ -265,7 +253,6 @@ def add_args(parser):
 CMD_TABLE = {
     'month': cli_to_ecsv_single,
     'range': cli_to_ecsv_range,
-    'foo': cli_foo,
 }
 
 def cli_to_ecsv(args: Namespace) -> None:
