@@ -35,6 +35,7 @@ dependencies = [
   'aiohttp',
   'aiodns',
   'astropy',
+  'astroplan',        # sister project from the astropy project
   'lica@git+https://github.com/guaix-ucm/lica@main', # own assorted utilities
 ]
 
@@ -50,6 +51,7 @@ Repository = "https://github.com/STARS4ALL/TESS-IDA-TOOLS.git"
 [project.scripts]
 
 get-tess-ida = "tess.ida.download:main"
+ida-to-ecsv = "tess.ida.transform:main"
 
 # pyproject.toml
 # Automatically generates a _version-py file from with Git information
