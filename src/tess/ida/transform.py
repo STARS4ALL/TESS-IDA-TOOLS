@@ -23,9 +23,6 @@ from argparse import Namespace
 
 import numpy as np
 import astropy.units as u
-
-
-from astropy.io import ascii
 from astropy.time import Time
 from astropy.table import Table, QTable
 from astropy.coordinates import EarthLocation
