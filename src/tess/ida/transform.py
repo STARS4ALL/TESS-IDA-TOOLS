@@ -24,7 +24,9 @@ from argparse import Namespace
 import numpy as np
 import astropy.units as u
 from astropy.time import Time
-from astropy.table import Table, QTable
+from astropy.table import QTable
+
+
 from astropy.coordinates import EarthLocation
 from astroplan import Observer
 
@@ -129,38 +131,36 @@ def ida_metadata(path):
     header['Position'] = {'latitude': float(latitude), 'longitude': float(longitude), 'height': float(height)}
     return header
    
-
-def to_table(path: str) -> Table:
-    header = ida_metadata(path)
-    table = ascii.read(path, delimiter=';', format='basic', names=IDA_NAMES, exclude_names=IDA_EXCLUDE, converters=IDA_DATA_TYPES, guess=False)
-    table.meta['ida'] = header
-    del table.meta['comments']
-    return table
-
 def to_table(path: str) -> QTable:
     log.info("Reading IDA file: %s", os.path.basename(path))
     header = ida_metadata(path)
     table = QTable.read(path, format='ascii.basic', delimiter=';', names=IDA_NAMES, exclude_names=IDA_EXCLUDE, converters=IDA_DATA_TYPES, guess=False)
     table.meta['ida'] = header
     del table.meta['comments']
+    # Convert to quiatities by adding units
+    table['Frequency'] = table['Frequency'] * u.Hz
+    table['Enclosure Temperature'] = table['Enclosure Temperature'] * u.deg_C
+    table['Sky Temperature'] = table['Sky Temperature'] * u.deg_C
+    table['MSAS'] = table['MSAS'] * u.mag(u.Hz)
     return table
 
 def add_columns(table: QTable) -> None:
+    log.info("Transforming table")
     latitude = table.meta['ida']['Position']['latitude']
     longitude = table.meta['ida']['Position']['longitude']
     height = table.meta['ida']['Position']['height']
     obs_name = table.meta['ida']['Data supplier']['observer']
     location = EarthLocation(lat=latitude, lon=longitude, height=height)
     observer = Observer(name=obs_name, location=location)
-    log.info("Converting 'UTC Date & Time' column datatype to astropy Time")
+    log.debug("Converting 'UTC Date & Time' column datatype to astropy Time")
     table['UTC Date & Time'] = Time(table['UTC Date & Time'], scale='utc', location=location)
-    log.info("Adding new 'Julian Date' column")
-    table['Julian Date'] = Time(table['UTC Date & Time'], scale='utc', location=location).jd
-    log.info("Adding new 'Sun Alt' column")
-    table['Sun Alt']   = observer.sun_altaz(table['UTC Date & Time']).alt.deg
-    log.info("Adding new 'Moon Alt' column")
-    table['Moon Alt']   = observer.moon_altaz(table['UTC Date & Time']).alt.deg
-    log.info("Adding new 'Moon Phase' column")
+    log.debug("Adding new 'Julian Date' column")
+    table['Julian Date'] = table['UTC Date & Time'].jd
+    log.debug("Adding new 'Sun Alt' column")
+    table['Sun Alt']   = observer.sun_altaz(table['UTC Date & Time']).alt.deg * u.deg
+    log.debug("Adding new 'Moon Alt' column")
+    table['Moon Alt']   = observer.moon_altaz(table['UTC Date & Time']).alt.deg * u.deg
+    log.debug("Adding new 'Moon Phase' column")
     table['Moon Phase'] = observer.moon_phase(table['UTC Date & Time']) / (np.pi * u.rad)
   
     
@@ -171,8 +171,10 @@ def add_columns(table: QTable) -> None:
 def to_ecsv_single(path: str, out_dir: str) -> None:
     table = to_table(path)
     add_columns(table)
+    log.info("\n%s",table)
     log.info("\n%s",table.info)
     path = output_path(path, out_dir)
+    log.info("Writting ECSV file: %s", os.path.basename(path))
     table.write(path, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
    
 
