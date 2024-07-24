@@ -154,7 +154,6 @@ def add_columns(table: QTable) -> None:
     obs_name = table.meta['ida']['Data supplier']['observer']
     location = EarthLocation(lat=latitude, lon=longitude, height=height)
     observer = Observer(name=obs_name, location=location)
-    
     log.debug("Adding new 'Sun Alt' column")
     table['Sun Alt']   = observer.sun_altaz(table['UTC Date & Time']).alt.deg * u.deg
     log.debug("Adding new 'Moon Alt' column")
