@@ -20,7 +20,7 @@ except:
 IDA_HEADER_LEN = 35
 
 
-# IDA keywords in the Header line
+# IDA keywords in the comments section of the IDA file
 class IKW(StrEnum):
     LICENSE      = 'License'
     NUM_HEADERS  = 'Number of header lines'
