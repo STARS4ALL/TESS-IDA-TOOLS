@@ -23,9 +23,7 @@ from argparse import Namespace
 
 import numpy as np
 import astropy.units as u
-from astropy.time import Time
-from astropy.table import QTable
-
+from astropy.timeseries import TimeSeries 
 
 from astropy.coordinates import EarthLocation
 from astroplan import Observer
@@ -153,7 +151,7 @@ def ida_metadata(path):
             {'azimuth': float(az4), 'zenital': float(zen4)}]
     return header
 
-from astropy.timeseries import TimeSeries   
+  
 def to_table(path: str) -> TimeSeries:
     log.info("Reading IDA file: %s", path)
     header = ida_metadata(path)
@@ -189,7 +187,7 @@ def to_table(path: str) -> TimeSeries:
         table['MSAS4'] = table['MSAS4'] * u.mag(u.Hz)
     return table
 
-def add_columns(table: QTable) -> None:
+def add_columns(table: TimeSeries) -> None:
     log.info("Transforming table")
     latitude = table.meta['ida']['Position']['latitude']
     longitude = table.meta['ida']['Position']['longitude']
@@ -215,7 +213,7 @@ def to_ecsv_single(path: str, out_dir: str) -> None:
     log.info("\n%s",table)
     log.info("\n%s",table.info)
     path = output_path(path, out_dir)
-    log.info("Writting ECSV file: %s", os.path.basename(path))
+    log.info("Writting ECSV file: %s", path)
     table.write(path, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
    
 
