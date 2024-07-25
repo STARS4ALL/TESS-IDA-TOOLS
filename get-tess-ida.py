@@ -30,7 +30,7 @@ from dateutil.relativedelta import relativedelta
 # ----------------
 
 DESCRIPTION = "Get TESS-W IDA monthly files from NextCloud server"
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 # -----------------------
 # Module global variables
@@ -75,7 +75,7 @@ def do_ida_single_month(base_url: str, ida_base_dir: str, name: str, month: str|
     params = {'path': '/' + name, 'files': target_file}
     resp = requests.get(url, params=params, timeout=timeout)
     if resp.status_code == 404:
-        log.warn("No monthly file exits: %s", target_file)
+        log.warning("No monthly file exits: %s", target_file)
         return
     resp.raise_for_status() # catch other unexpected return code
     log.info("GET %s [%d OK]", resp.url, resp.status_code)
@@ -86,36 +86,6 @@ def do_ida_single_month(base_url: str, ida_base_dir: str, name: str, month: str|
         log.info("writing %s", file_path)
         f.write(contents)
 
-
-def ida_year(base_url: str, args) -> None:
-    year = args.year
-    name = args.name
-    url = base_url + '/download'
-    for i in range(0,12):
-        cur_month = year + relativedelta(months=i)
-        do_ida_single_month(base_url, name, cur_month.strftime('%Y-%m'))
-
-def ida_since(base_url: str, args) -> None:
-    name = args.name
-    M1 = args.since
-    M2 = args.until
-    while M1 <=  M2:
-        cur_month = M1.strftime('%Y-%m')
-        do_ida_single_month(base_url, name, cur_month)
-        M1 += relativedelta(months=1)
-
-def ida_all(base_url: str, args) -> None:
-    S1 = args.from_var
-    S2 = args.to
-    M2 = args.until
-    for i in range(S1,S2+1):
-        name = 'stars' + str(i)
-        M1 = args.since
-        while M1 <=  M2:
-            cur_month = M1.strftime('%Y-%m')
-            do_ida_single_month(base_url, name, cur_month)
-            M1 += relativedelta(months=1)
-
 # ================================
 # COMMAND LINE INTERFACE FUNCTIONS
 # ================================
@@ -123,47 +93,59 @@ def ida_all(base_url: str, args) -> None:
 def cli_ida_single_month(base_url: str, args: Namespace) -> None:
     month = args.month.strftime('%Y-%m') if not args.exact else None
     do_ida_single_month( 
-            base_url, 
-            args.out_dir, 
-            args.name, 
-            month, 
-            args.exact, 
-            timeout=4
+        base_url = base_url, 
+        ida_base_dir = args.out_dir, 
+        name = args.name, 
+        month = month, 
+        exact = args.exact, 
+        timeout = 4
     )
 
-   
 
 def cli_ida_year(base_url: str, args: Namespace) -> None:
-     ida_year(
-        base_url = base_url,
-        ida_base_dir = args.out_dir,
-        name = args.name,
-        year = args.year,
-        concurrent = args.concurrent,
-    )
+    year = args.year
+    year = year.replace(month=1, day=1)
+    for i in range(0,12):
+        cur_month = year + relativedelta(months=i)
+        do_ida_single_month( 
+            base_url = base_url, 
+            ida_base_dir = args.out_dir, 
+            name = args.name, 
+            month = cur_month.strftime('%Y-%m'), 
+            exact = None, 
+            timeout = 4
+        )
 
 
 def cli_ida_range(base_url: str, args: Namespace) -> None:
-     ida_range(
-        base_url = base_url,
-        ida_base_dir = args.out_dir, 
-        name = args.name, 
-        since = args.since, 
-        until = args.until, 
-        concurrent = args.concurrent
-    )
+    month = args.since
+    while month <=  args.until:
+        do_ida_single_month( 
+            base_url = base_url, 
+            ida_base_dir = args.out_dir, 
+            name = args.name, 
+            month = month.strftime('%Y-%m'), 
+            exact = None, 
+            timeout = 4
+        )
+        month += relativedelta(months=1)
 
 
 def cli_ida_selected(base_url: str, args: Namespace) -> None:
-     ida_selected(
-        base_url = base_url,
-        ida_base_dir = args.out_dir,
-        seq = args.list,
-        rang = args.range,
-        since = args.since,
-        until = args.until,
-        concurrent = args.concurrent
-    )
+    rang = sorted(args.range) if args.range is not None else None
+    seq = sorted(args.list) if args.list is not None else None
+    if rang:
+        for i in range(rang[0],  rang[1]+1):
+            args.name = 'stars' + str(i)
+            cli_ida_range(base_url, args)
+    else:
+        for i in seq:
+            args.name = 'stars' + str(i)
+            cli_ida_range(base_url, args)
+
+# =================
+# LOGGER AND PARSER
+# =================
 
 def configure_log(args):
     '''Configure the root logger'''
@@ -193,13 +175,11 @@ def configure_log(args):
         log.addHandler(fh)
 
 
-
 def args_parser(name, version, description):
     # create the top-level parser with generic options
     parser = argparse.ArgumentParser(prog=name, description=description)
     parser.add_argument('--version', action='version', version='{0} {1}'.format(name, version))
-    group0 = parser.add_mutually_exclusive_group()
-    group0.add_argument('--console', action='store_true', help='Log to vanilla console.')
+    parser.add_argument('--console', action='store_true', help='Log to vanilla console.')
     parser.add_argument('--log-file', type=str, metavar="<FILE>", default=None, help='Log to file.')
     group1 = parser.add_mutually_exclusive_group()
     group1.add_argument('--verbose', action='store_true', help='Verbose output.')
@@ -216,13 +196,11 @@ def args_parser(name, version, description):
     parser_year.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
     parser_year.add_argument('-y', '--year', type=vyear, metavar='<YYYY>', required=True, help='Year')
     parser_year.add_argument('-o', '--out-dir', type=str, default=None, help='Output IDA base directory')
-    parser_year.add_argument('-c', '--concurrent', type=int, metavar='<N>', choices=[1,2,3,4], default=4, help='Number of concurrent downloads (defaults to %(default)s)')
     parser_since = subparser.add_parser('range', help='Download from a month range')
     parser_since.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
     parser_since.add_argument('-s', '--since',  type=vmonth, default=prev_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
     parser_since.add_argument('-u', '--until',  type=vmonth, default=cur_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
     parser_since.add_argument('-o', '--out-dir', type=str, default=None, help='Output IDA base directory')
-    parser_since.add_argument('-c', '--concurrent', type=int, metavar='<N>', choices=[1,2,4,6,8], default=4, help='Number of concurrent downloads (defaults to %(default)s)')
     parser_sel = subparser.add_parser('selected', help='Download selected photometers in a month range')
     group2 = parser_sel.add_mutually_exclusive_group(required=True)
     group2.add_argument('-l', '--list', type=int, default=None, nargs='+', metavar='<N>', help='Photometer number list')
@@ -230,12 +208,11 @@ def args_parser(name, version, description):
     parser_sel.add_argument('-s', '--since',  type=vmonth, default=prev_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
     parser_sel.add_argument('-u', '--until',  type=vmonth, default=cur_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
     parser_sel.add_argument('-o', '--out-dir', type=str, default=None, help='Output IDA base directory')
-    parser_sel.add_argument('-c', '--concurrent', type=int, metavar='<N>', choices=[1,2,3,4], default=4, help='Number of concurrent downloads (defaults to %(default)s)')
     return parser
 
-# -------------
+# =============
 # MAIN FUNCTION
-# -------------
+# =============
 
 
 CMD_TABLE = {

@@ -3,7 +3,7 @@ Get TESS-W IDA monthly files from NextCloud server
 
 # Instalation and dependencies
 
-There are two versions of this tool, the simples one is a self contained script called ***get-tess-ida.py***) which just downloads the data files
+There are two versions of this tool, the simples one is a self contained script called ***get-tess-ida.py***) which just downloads the data files.
 The other one is a full package, bundled other analysis tools (*being developed at the moment*).
 For both versions, it is ***highly recommended*** to create a virtual environment and activate is:
 
@@ -39,7 +39,7 @@ git clone https://github.com/STARS4ALL/TESS-IDA-TOOLS.git
 pip install .
 ```
 
-## Additional configuartion for bosth version 
+## Additional configuartion for both versions 
 
 1. Make an env file caled `.env` (Mac/Linux) or settings.ini (Windows) containing an enviromental variable
 
@@ -116,11 +116,31 @@ python get-tess-ida.py --console year --name stars1 --year 2023
 ```
 
 4. Download monthly files since a given month until another
+
+If no `--since` parameter is given, defaults to last month.
+If no `--until` parameter is given, defaults to current month.
+
 ```bash
-python get-tess-ida.py --console since --name stars1 --since 2023-3 --until 2023-06
+python get-tess-ida.py --console since --name stars1 --since 2023-3 --until 2023-6
 ```
 
-5. Download a range of monthly files for a series of consecutive photometers
+
+5. Download a range of monthly files for a selected set of photometers
+
+If no `--since` parameter is given, defaults to last month.
+If no `--until` parameter is given, defaults to current month.
+
+Instead of names, we pass just photometer numbers. 
+
+The script below will download data from photometers `stars1` up to `stars5` since month `2023-06` until current month
+
 ```bash
-python get-tess-ida.py --console all --from 1 --to 5 --since 2023-06
+python get-tess-ida.py --console selected --range 1 5 --since 2023-06
+```
+
+The script below will download data from selected photometers `stars1` , `stars243`, `stars703` 
+since last month until current month
+
+```bash
+python get-tess-ida.py --console selected --list 1 245 703
 ```
