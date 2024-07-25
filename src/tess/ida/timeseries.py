@@ -36,6 +36,7 @@ from lica.validators import vfile, vmonth
 
 from .. import __version__
 from .constants import TEW, T4C, IKW, TS, IDA_HEADER_LEN
+from .utils import cur_month, prev_month, makedirs, v_or_n
 
 # ----------------
 # Module constants
@@ -70,15 +71,6 @@ log = logging.getLogger(__name__.split('.')[-1])
 # Auxiliary functions
 # -------------------
 
-def v_or_n(value: str):
-    '''Value or None function'''
-    value = value.strip()
-    lvalue = value.lower()
-    return None if lvalue == 'none' or lvalue == 'unknown' or lvalue == '' else value
-
-def now() -> datetime:
-    return datetime.now().replace(day=1,hour=0,minute=0,second=0,microsecond=0)
-
 
 def grouper(n: int, iterable):
     iterable = iter(iterable)
@@ -96,12 +88,6 @@ def output_path(filename: str, base_dir: str | None) -> str:
         os.makedirs(new_dir)
     return os.path.join(new_dir, filename)
 
-
-def daterange(from_month: datetime, to_month: datetime) -> str:
-    month = from_month
-    while month <=  to_month:
-        yield month.strftime('%Y-%m')
-        month += relativedelta(months=1)
 
 
 # =============
@@ -239,13 +225,13 @@ def add_args(parser):
     subparser = parser.add_subparsers(dest='command')
     parse_single = subparser.add_parser('month', help='Transform single IDA monthly file to ECSV')
     parse_single.add_argument('-i', '--input-file', type=vfile, required=True, help='Input IDA file')
-    parse_single.add_argument('-o', '--out-dir', type=str, default=None, help='Output base directory')
+    parse_single.add_argument('-o', '--out-dir', type=str, default=None, help='Output ECSV base directory')
 
     parse_range = subparser.add_parser('range', help='Transform a range of IDA monthly files into a single ECSV')
     parse_range.add_argument('-i', '--input-dir', type=vfile, required=True, help='Input IDA file')
-    parse_range.add_argument('-s', '--since',  type=vmonth, required=True, metavar='<YYYY-MM>', help='Year and Month')
-    parse_range.add_argument('-u', '--until',  type=vmonth, default=now(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s)')
-    parse_range.add_argument('-o', '--out-dir', type=str, default=None, help='Output base directory')
+    parse_range.add_argument('-s', '--since',  type=vmonth, default=prev_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s)')
+    parse_range.add_argument('-u', '--until',  type=vmonth, default=cur_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s)')
+    parse_range.add_argument('-o', '--out-dir', type=str, default=None, help='Output ECSV base directory')
 
     return parser
 
