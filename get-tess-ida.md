@@ -63,16 +63,16 @@ The utility is self-explanatory
 `python get-tess-ida.py -h` shows general help and avaliable commands:
 
 ```bash
-usage: ida.main [-h] [--version] [--console] [--log-file <FILE>] [--verbose | --quiet] {month,year,since,all} ...
+usage: ida.main [-h] [--version] [--console] [--log-file <FILE>] [--verbose | --quiet] {month,year,range,selected} ...
 
 Get TESS-W IDA monthly files from NextCloud server
 
 positional arguments:
-  {month,year,since,all}
+  {month,year,range,selected}
     month               Download single monthly file
     year                Download a year of monthly files
-    since               Download since a given month until another
-    all                 Download all photometers from a given month until another
+    range               Download from a month range
+    selected            Download selected photometers in a month range
 
 options:
   -h, --help            show this help message and exit
@@ -86,10 +86,10 @@ options:
 
 Each command has its own help:
 
-`python get-tess-ida.py since -h` shows additional arguments
+`python get-tess-ida.py range -h` shows additional arguments
 
 ```bash
-usage: ida.main since [-h] -n NAME -s <YYYY-MM> [-u <YYYY-MM>]
+usage: ida.main range [-h] -n NAME -s <YYYY-MM> [-u <YYYY-MM>]
 
 options:
   -h, --help            show this help message and exit
@@ -99,6 +99,7 @@ options:
   -u <YYYY-MM>, --until <YYYY-MM>
                         Year and Month (defaults to current month)
 ```
+## Examples
 
 1. Download single month for a given photometer
 ```bash
