@@ -161,7 +161,7 @@ async def cli_ida_selected(base_url: str, args: Namespace) -> None:
 
 
 def add_args(parser):
-     # Now parse the application specific parts
+    # Now parse the application specific parts
     subparser = parser.add_subparsers(dest='command')
     parser_month = subparser.add_parser('month', help='Download single monthly file')
     parser_month.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
