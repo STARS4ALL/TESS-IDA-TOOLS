@@ -34,7 +34,7 @@ from lica.validators import vmonth, vyear
 # -------------
 
 from .. import __version__
-from .utils import cur_month, prev_month, grouper, daterange, makedirs
+from .utils import cur_month, prev_month, group, month_range, makedirs
 
 # ----------------
 # Module constants
@@ -71,7 +71,7 @@ async def do_ida_single_month(session, base_url: str, ida_base_dir: str, name: s
         await f.write(contents)
 
 async def do_ida_range(session, base_url: str, ida_base_dir: str, name: str, since: datetime, until: datetime, N: int, timeout: int) -> None:
-    for grp in grouper(N, daterange(since, until)):
+    for grp in group(N, month_range(since, until)):
         tasks = [asyncio.create_task(do_ida_single_month(session, base_url, ida_base_dir, name, m, None, timeout)) for m in grp]
         await asyncio.gather(*tasks)
 

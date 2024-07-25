@@ -30,12 +30,12 @@ def prev_month() -> datetime:
     month = datetime.now().replace(day=1,hour=0,minute=0,second=0,microsecond=0)
     return month - relativedelta(months=1)
 
-def grouper(n: int, iterable):
+def group(n: int, iterable):
     iterable = iter(iterable)
     return iter(lambda: list(itertools.islice(iterable, n)), [])
 
 
-def daterange(from_month: datetime, to_month: datetime) -> str:
+def month_range(from_month: datetime, to_month: datetime) -> str:
     month = from_month
     while month <=  to_month:
         yield month.strftime('%Y-%m')
