@@ -11,7 +11,7 @@
 import os
 import asyncio
 import logging
-import itertools
+
 
 from datetime import datetime
 from argparse import Namespace
@@ -34,6 +34,7 @@ from lica.validators import vmonth, vyear
 # -------------
 
 from .. import __version__
+from .utils import cur_month, prev_month, grouper, daterange
 
 # ----------------
 # Module constants
@@ -52,14 +53,6 @@ log = logging.getLogger(__name__.split('.')[-1])
 # Auxiliary functions
 # -------------------
 
-def now() -> datetime:
-    return datetime.now().replace(day=1,hour=0,minute=0,second=0,microsecond=0)
-
-
-def grouper(n: int, iterable):
-    iterable = iter(iterable)
-    return iter(lambda: list(itertools.islice(iterable, n)), [])
-
 
 def mkdir(name: str, filename: str, base_dir: str | None) -> str:
     base_dir = os.getcwd() if base_dir is None else base_dir
@@ -68,13 +61,6 @@ def mkdir(name: str, filename: str, base_dir: str | None) -> str:
         log.debug("new directory: %s", dir_path)
         os.makedirs(dir_path)
     return os.path.join(dir_path, filename)
-
-
-def daterange(from_month: datetime, to_month: datetime) -> str:
-    month = from_month
-    while month <=  to_month:
-        yield month.strftime('%Y-%m')
-        month += relativedelta(months=1)
 
 
 async def do_ida_single_month(session, base_url: str, base_dir: str, name: str, month: str|None, exact: str|None) -> None:
@@ -92,7 +78,7 @@ async def do_ida_single_month(session, base_url: str, base_dir: str, name: str, 
         log.info("writing %s", file_path)
         await f.write(contents)
 
-async def do_ida_since(session, base_url: str, base_dir: str, name: str, since: datetime, until: datetime, N: int) -> None:
+async def do_ida_range(session, base_url: str, base_dir: str, name: str, since: datetime, until: datetime, N: int) -> None:
     for grp in grouper(N, daterange(since, until)):
         tasks = [asyncio.create_task(do_ida_single_month(session, base_url, base_dir, name, m, None)) for m in grp]
         await asyncio.gather(*tasks)
@@ -117,16 +103,16 @@ async def ida_year(base_url: str, base_dir: str, name: str, year: datetime, conc
             await asyncio.gather(*tasks)
 
 
-async def ida_since(base_url: str, base_dir: str, name: str, since: datetime, until: datetime, concurrent: int) -> None:
+async def ida_range(base_url: str, base_dir: str, name: str, since: datetime, until: datetime, concurrent: int) -> None:
     async with aiohttp.ClientSession() as session:
-        await do_ida_since(session, base_url, base_dir, name, since, until, concurrent)
+        await do_ida_range(session, base_url, base_dir, name, since, until, concurrent)
 
 
 async def ida_all(base_url: str, base_dir: str, from_phot: int, to_phot: int, since: datetime, until: datetime, concurrent: int) -> None:
     async with aiohttp.ClientSession() as session:
         for i in range(from_phot,  to_phot+1):
             name = 'stars' + str(i)
-            await do_ida_since(session, base_url, base_dir, name, since, until, concurrent)
+            await do_ida_range(session, base_url, base_dir, name, since, until, concurrent)
 
 
 # ================================
@@ -153,8 +139,8 @@ async def cli_ida_year(base_url: str, args: Namespace) -> None:
     )
 
 
-async def cli_ida_since(base_url: str, args: Namespace) -> None:
-    await ida_since(
+async def cli_ida_range(base_url: str, args: Namespace) -> None:
+    await ida_range(
         base_url = base_url,
         base_dir = args.out_dir, 
         name = args.name, 
@@ -190,17 +176,17 @@ def add_args(parser):
     parser_year.add_argument('-y', '--year', type=vyear, metavar='<YYYY>', required=True, help='Year')
     parser_year.add_argument('-o', '--out-dir', type=str, default=None, help='Output base directory')
     parser_year.add_argument('-c', '--concurrent', type=int, metavar='<N>', choices=[1,2,3,4], default=4, help='Number of concurrent downloads (defaults to %(default)s)')
-    parser_since = subparser.add_parser('since', help='Download since a given month until another')
+    parser_since = subparser.add_parser('range', help='Download from a month range')
     parser_since.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
-    parser_since.add_argument('-s', '--since',  type=vmonth, required=True, metavar='<YYYY-MM>', help='Year and Month')
-    parser_since.add_argument('-u', '--until',  type=vmonth, default=now(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
+    parser_since.add_argument('-s', '--since',  type=vmonth, default=prev_month(), metavar='<YYYY-MM>', help='Year and Month')
+    parser_since.add_argument('-u', '--until',  type=vmonth, default=cur_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
     parser_since.add_argument('-o', '--out-dir', type=str, default=None, help='Output base directory')
     parser_since.add_argument('-c', '--concurrent', type=int, metavar='<N>', choices=[1,2,4,6,8], default=4, help='Number of concurrent downloads (defaults to %(default)s)')
-    parser_all = subparser.add_parser('all', help='Download all photometers from a given month until another')
+    parser_all = subparser.add_parser('all', help='Download all photometers from a month range')
     parser_all.add_argument('-f', '--from', dest='from_var', type=int, required=True, help='From photometer number')
     parser_all.add_argument('-t', '--to', type=int, required=True, help='To photometer number')
-    parser_all.add_argument('-s', '--since',  type=vmonth, required=True, metavar='<YYYY-MM>', help='Year and Month')
-    parser_all.add_argument('-u', '--until',  type=vmonth, default=now(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
+    parser_all.add_argument('-s', '--since',  type=vmonth, default=prev_month(), metavar='<YYYY-MM>', help='Year and Month')
+    parser_all.add_argument('-u', '--until',  type=vmonth, default=cur_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
     parser_all.add_argument('-o', '--out-dir', type=str, default=None, help='Output base directory')
     parser_all.add_argument('-c', '--concurrent', type=int, metavar='<N>', choices=[1,2,3,4], default=4, help='Number of concurrent downloads (defaults to %(default)s)')
     return parser
@@ -209,7 +195,7 @@ def add_args(parser):
 CMD_TABLE = {
     'month': cli_ida_single_month,
     'year': cli_ida_year,
-    'since': cli_ida_since,
+    'range': cli_ida_range,
     'all': cli_ida_all,
 }
 
