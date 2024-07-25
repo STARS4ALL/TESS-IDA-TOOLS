@@ -89,7 +89,7 @@ async def ida_single_month(base_url: str, ida_base_dir: str, name: str, month: s
 async def ida_year(base_url: str, ida_base_dir: str, name: str, year: datetime, concurrent: int, timeout:int = 4) -> None:
     year = year.replace(month=1, day=1)
     async with aiohttp.ClientSession() as session:
-        for grp in grouper(concurrent, range(0,12)):
+        for grp in group(concurrent, range(0,12)):
             tasks = [asyncio.create_task(do_ida_single_month(session, base_url, ida_base_dir, name, 
                 (year + relativedelta(months=m)).strftime('%Y-%m'), None, timeout)) for m in grp]
             await asyncio.gather(*tasks)
