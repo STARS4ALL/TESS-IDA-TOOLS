@@ -9,6 +9,7 @@
 # ----------------------
 
 import os
+import re
 import glob
 import logging
 import itertools
@@ -194,7 +195,7 @@ def to_ecsv_range(in_dir: str, out_dir: str, since: datetime, until: datetime) -
     log.info(months)
     search_path = os.path.join(in_dir, '*.dat')
     for path in glob.iglob(search_path):
-        log.info(os.path.basename(path))
+        log.info(os.path.splitext(os.path.basename(path))[0])
 
 # ================================
 # COMMAND LINE INTERFACE FUNCTIONS
