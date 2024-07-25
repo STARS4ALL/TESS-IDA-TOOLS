@@ -104,7 +104,7 @@ async def ida_all(base_url: str, ida_base_dir: str, from_phot: int, to_phot: int
     async with aiohttp.ClientSession() as session:
         for i in range(from_phot,  to_phot+1):
             name = 'stars' + str(i)
-            await do_ida_range(session, base_url, ida_base_dir, name, since, until, concurrent, tiemout)
+            await do_ida_range(session, base_url, ida_base_dir, name, since, until, concurrent, timeout)
 
 
 # ================================

@@ -50,7 +50,6 @@ def makedirs(base_dir: str | None, name: str) -> str:
         os.makedirs(full_dir_path)
     return full_dir_path
 
-
 def v_or_n(value: str) -> str | None:
     '''Value or None function'''
     value = value.strip()

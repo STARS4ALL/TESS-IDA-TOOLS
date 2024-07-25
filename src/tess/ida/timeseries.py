@@ -26,9 +26,8 @@ from astropy.timeseries import TimeSeries
 from astropy.coordinates import EarthLocation
 from astroplan import Observer
 
-from dateutil.relativedelta import relativedelta
 from lica.cli import execute
-from lica.validators import vfile, vmonth
+from lica.validators import vfile, vdir, vmonth
 
 #--------------
 # local imports
@@ -72,21 +71,11 @@ log = logging.getLogger(__name__.split('.')[-1])
 # -------------------
 
 
-def grouper(n: int, iterable):
-    iterable = iter(iterable)
-    return iter(lambda: list(itertools.islice(iterable, n)), [])
-
-
-def output_path(filename: str, base_dir: str | None) -> str:
-    base_dir = os.getcwd() if base_dir is None else base_dir
-    root, ext = os.path.splitext(filename)
-    root, filename = os.path.split(root)
-    new_dir = os.path.join(base_dir, root)
-    filename = filename + '.ecsv'
-    if not os.path.isdir(new_dir):
-        log.debug("new directory: %s", new_dir)
-        os.makedirs(new_dir)
-    return os.path.join(new_dir, filename)
+def output_path(path: str, name: str, out_dir: str | None) -> str:
+    full_dir = makedirs(out_dir, name)
+    root, ext = os.path.splitext(path)
+    path = os.path.basename(root)  + '.ecsv'
+    return os.path.join(full_dir, path)
 
 
 
@@ -194,7 +183,8 @@ def add_columns(table: TimeSeries) -> None:
 def to_ecsv_single(path: str, out_dir: str) -> None:
     table = to_table(path)
     add_columns(table)
-    path = output_path(path, out_dir)
+    name = table.meta['ida'][IKW.PHOT_NAME]
+    path = output_path(path, name, out_dir)
     log.info("Saving Time Series to ECSV file: %s", path)
     table.write(path, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
    
@@ -226,13 +216,11 @@ def add_args(parser):
     parse_single = subparser.add_parser('month', help='Transform single IDA monthly file to ECSV')
     parse_single.add_argument('-i', '--input-file', type=vfile, required=True, help='Input IDA file')
     parse_single.add_argument('-o', '--out-dir', type=str, default=None, help='Output ECSV base directory')
-
     parse_range = subparser.add_parser('range', help='Transform a range of IDA monthly files into a single ECSV')
-    parse_range.add_argument('-i', '--input-dir', type=vfile, required=True, help='Input IDA file')
+    parse_range.add_argument('-i', '--input-dir', type=vdir, required=True, help='Input IDA base dir')
     parse_range.add_argument('-s', '--since',  type=vmonth, default=prev_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s)')
     parse_range.add_argument('-u', '--until',  type=vmonth, default=cur_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s)')
     parse_range.add_argument('-o', '--out-dir', type=str, default=None, help='Output ECSV base directory')
-
     return parser
 
 

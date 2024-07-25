@@ -34,6 +34,7 @@ class IKW(StrEnum):
     ZP           = 'TESS zero point'
     AIM          = 'Measurement direction per channel'
     FILTERS      = 'Filters per channel'
+    PHOT_NAME    = 'Instrument ID'
 
 
 
