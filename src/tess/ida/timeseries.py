@@ -9,6 +9,7 @@
 # ----------------------
 
 import os
+import glob
 import logging
 import itertools
 
@@ -35,7 +36,7 @@ from lica.validators import vfile, vdir, vmonth
 
 from .. import __version__
 from .constants import TEW, T4C, IKW, TS, IDA_HEADER_LEN
-from .utils import cur_month, prev_month, makedirs, v_or_n
+from .utils import cur_month, prev_month, makedirs, v_or_n, month_range
 
 # ----------------
 # Module constants
@@ -189,7 +190,11 @@ def to_ecsv_single(path: str, out_dir: str) -> None:
     table.write(path, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
    
 def to_ecsv_range(in_dir: str, out_dir: str, since: datetime, until: datetime) -> None:
-    pass
+    months = [m for m in month_range(since, until)]
+    log.info(months)
+    search_path = os.path.join(in_dir, '*.dat')
+    for path in glob.iglob(search_path):
+        log.info(path)
 
 # ================================
 # COMMAND LINE INTERFACE FUNCTIONS
