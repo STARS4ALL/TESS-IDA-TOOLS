@@ -194,7 +194,7 @@ def to_ecsv_range(in_dir: str, out_dir: str, since: datetime, until: datetime) -
     log.info(months)
     search_path = os.path.join(in_dir, '*.dat')
     for path in glob.iglob(search_path):
-        log.info(path)
+        log.info(os.path.basename(path))
 
 # ================================
 # COMMAND LINE INTERFACE FUNCTIONS
