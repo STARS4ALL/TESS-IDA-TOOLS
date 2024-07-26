@@ -119,8 +119,7 @@ If no `--until` parameter is given, defaults to current month.
 python get-tess-ida.py --console range --since 2023-3 --until 2023-6 --name stars1 
 ```
 
-
-5. Download a range of monthly files for a selected set of photometers
+4. Download a range of monthly files for a selected set of photometers
 
 If no `--since` parameter is given, defaults to last month.
 If no `--until` parameter is given, defaults to current month.
