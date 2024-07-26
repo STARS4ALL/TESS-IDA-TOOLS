@@ -38,6 +38,7 @@ dependencies = [
   'aiodns',
   'astropy',
   'astroplan',         # sister project from the astropy project
+  'sortedcontainers',  # fast indexing of astropy tables
   'lica@git+https://github.com/guaix-ucm/lica@main', # own assorted utilities
 ]
 
@@ -55,6 +56,7 @@ Repository = "https://github.com/STARS4ALL/TESS-IDA-TOOLS.git"
 tess-ida-get = "tess.ida.download:main"
 tess-ida-ecsv = "tess.ida.timeseries:main"
 tess-ida-pipe = "tess.ida.pipeline:main"
+tess-ida-schema = "tess.ida.database:main"
 
 # pyproject.toml
 # Automatically generates a _version-py file from with Git information

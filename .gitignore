@@ -166,4 +166,4 @@ cython_debug/
 # =========
 src/tess/_version.py
 stars*/
-
+*.ecsv

@@ -9,6 +9,7 @@
 # -----------------------
 
 import os
+import hashlib
 import itertools
 
 from datetime import datetime
@@ -65,3 +66,16 @@ def v_or_n(value: str) -> str | None:
     value = value.strip()
     lvalue = value.lower()
     return None if lvalue == 'none' or lvalue == 'unknown' or lvalue == '' else value
+
+
+def hash_func(file_path: str) -> str:
+    '''Compute a hash from the image'''
+    BLOCK_SIZE = 1048576 # 1MByte, the size of each read from the file
+    # md5() was the fastest algorithm I've tried
+    file_hash = hashlib.md5()
+    with open(file_path, 'rb') as f:
+        block = f.read(BLOCK_SIZE) 
+        while len(block) > 0:
+            file_hash.update(block)
+            block = f.read(BLOCK_SIZE)
+    return file_hash.hexdigest()

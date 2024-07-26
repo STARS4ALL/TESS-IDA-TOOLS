@@ -9,7 +9,6 @@
 # ----------------------
 
 import os
-import re
 import glob
 import logging
 import itertools
@@ -17,10 +16,13 @@ import itertools
 from datetime import datetime
 from argparse import Namespace, ArgumentParser
 from typing import Union
+from collections.abc import Sequence
 
 # -------------------
 # Third party imports
 # -------------------
+
+from pubsub import pub
 
 import numpy as np
 
@@ -39,8 +41,9 @@ from lica.typing import OptStr
 # -------------
 
 from .. import __version__
+from .database import adm_table_lookup
 from .constants import TEW, T4C, IKW, TS, IDA_HEADER_LEN
-from .utils import cur_month, prev_month, to_phot_dir, makedirs, v_or_n, month_range, name_month
+from .utils import cur_month, prev_month, to_phot_dir, makedirs, v_or_n, month_range, name_month, hash_func
 
 # ----------------
 # Module constants
@@ -172,8 +175,9 @@ def add_columns(table: TimeSeries, name: str, month: str) -> None:
     log.debug("[%s] [%s] Adding new %s column", name, month, TS.MOON_PHASE)
     table[TS.MOON_PHASE] = observer.moon_phase(table['time']) / (np.pi * u.rad)
   
+
 def create_table(path: str) -> TimeSeries:
-    '''Create TimeSeries table from IDA file'''
+    '''Create TimeSeries or loads table from IDA file'''
     name , month = name_month(path)
     log.info("[%s] [%s] Creating a Time Series from IDA file: %s", name, month, path)
     table = ida_to_table(path)
@@ -182,8 +186,8 @@ def create_table(path: str) -> TimeSeries:
 
 def load_table(path: str) -> TimeSeries:
     '''Read TimeSeries table from ECSV file'''
-    table = TimeSeries.read(path, format='ascii.ecsv', delimiter=',')
-    return table
+    return TimeSeries.read(path, format='ascii.ecsv', delimiter=',')
+
 
 def save_table(table: TimeSeries, path: str) -> None:
     '''Read TimeSeries table from ECSV file'''
@@ -195,8 +199,21 @@ def append_table(acc: TimeSeries, table: TimeSeries) -> TimeSeries:
     return vstack([acc, table])
 
 def do_to_ecsv_single(in_path: str, out_path: str) -> None:
-    table = create_table(in_path)
-    save_table(table, out_path)
+    name , month = name_month(in_path)
+    data = [os.path.basename(in_path), hash_func(in_path)]
+    result = adm_table_lookup(data[0])
+    if result:
+        _, stored_hash_str = result
+        if data[1] != stored_hash_str or not os.path.isfile(out_path):
+            pub.sendMessage('update_database', data=data)
+            table = create_table(in_path)
+            save_table(table, out_path)
+        else:
+            log.info("[%s] [%s] Time Series already in ECSV file: %s", name, month, out_path)
+    else:
+        pub.sendMessage('insert_database', data=data)
+        table = create_table(in_path)
+        save_table(table, out_path)
    
 # ===========
 # Generic API
@@ -315,8 +332,10 @@ CMD_TABLE = {
 def cli_to_ecsv(args: Namespace) -> None:
     '''The main entry point specified by pyprojectable.toml'''
     func = CMD_TABLE[args.command]
+    pub.sendMessage('load_database')
     func(args)
     log.info("done!")
+    pub.sendMessage('save_database')
 
 
 def main() -> None:
