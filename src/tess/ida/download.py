@@ -35,7 +35,7 @@ from lica.typing import OptStr
 # -------------
 
 from .. import __version__
-from .utils import cur_month, prev_month, group, month_range, makedirs
+from .utils import cur_month, prev_month, group, month_range, makedirs, name_month
 
 # ----------------
 # Module constants
@@ -59,16 +59,17 @@ async def do_ida_single(session, base_url: str, ida_base_dir: str, name: str, mo
     url = base_url + '/download'
     target_file = name + '_' + month + '.dat' if not exact else exact
     params = {'path': '/' + name, 'files': target_file}
+    _, month1 = name_month(target_file)
     async with session.get(url, params=params, timeout=timeout) as resp:
         if resp.status == 404:
-            log.warn("No monthly file exits: %s", target_file)
+            log.warn("[%s] No monthly file exits: %s", name, target_file)
             return
-        log.info("GET %s [%d OK]", resp.url, resp.status)
+        log.info("[%s] [%s] GET %s [%d OK]", name, month1, resp.url, resp.status)
         contents = await resp.text()
     full_dir_path = await asyncio.to_thread(makedirs, ida_base_dir, name)
     file_path = os.path.join(full_dir_path, target_file)
     async with aiofiles.open(file_path, mode='w') as f:
-        log.info("writing %s", file_path)
+        log.info("[%s] [%s] Writing %s", name, month1, file_path)
         await f.write(contents)
 
 async def do_ida_range(session, base_url: str, ida_base_dir: str, name: str, since: datetime, until: datetime, N: int, timeout: int) -> None:

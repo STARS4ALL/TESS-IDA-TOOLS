@@ -40,7 +40,7 @@ from lica.typing import OptStr
 
 from .. import __version__
 from .constants import TEW, T4C, IKW, TS, IDA_HEADER_LEN
-from .utils import cur_month, prev_month, to_phot_dir, makedirs, v_or_n, month_range
+from .utils import cur_month, prev_month, to_phot_dir, makedirs, v_or_n, month_range, name_month
 
 # ----------------
 # Module constants
@@ -123,7 +123,7 @@ def ida_metadata(path):
     return header
 
   
-def to_table(path: str) -> TimeSeries:
+def ida_to_table(path: str) -> TimeSeries:
     header = ida_metadata(path)
     nchannels = header[IKW.NUM_CHANNELS]
     names = IDA_NAMES if nchannels == 1 else IDA_NAMES_4C
@@ -157,26 +157,27 @@ def to_table(path: str) -> TimeSeries:
         table[T4C.MAG4] = table[T4C.MAG4] * u.mag(u.Hz)
     return table
 
-def add_columns(table: TimeSeries) -> None:
-    log.info("Adding Sun/Moon data to Time Series")
+def add_columns(table: TimeSeries, name: str, month: str) -> None:
+    log.info("[%s] [%s] Adding Sun/Moon data to Time Series", name, month)
     latitude = table.meta['ida'][IKW.POSITION]['latitude']
     longitude = table.meta['ida'][IKW.POSITION]['longitude']
     height = table.meta['ida'][IKW.POSITION]['height']
     obs_name = table.meta['ida'][IKW.OBSERVER]['observer']
     location = EarthLocation(lat=latitude, lon=longitude, height=height)
     observer = Observer(name=obs_name, location=location)
-    log.debug("Adding new %s column", TS.SUN_ALT)
+    log.debug("[%s] [%s] Adding new %s column", name, month, TS.SUN_ALT)
     table[TS.SUN_ALT]   = observer.sun_altaz(table['time']).alt.deg * u.deg
-    log.debug("Adding new %s column", TS.MOON_ALT)
+    log.debug("[%s][%s] Adding new %s column", name, month, TS.MOON_ALT)
     table[TS.MOON_ALT]   = observer.moon_altaz(table['time']).alt.deg * u.deg
-    log.debug("Adding new %s column", TS.MOON_PHASE)
+    log.debug("[%s] [%s] Adding new %s column", name, month, TS.MOON_PHASE)
     table[TS.MOON_PHASE] = observer.moon_phase(table['time']) / (np.pi * u.rad)
   
 def create_table(path: str) -> TimeSeries:
     '''Create TimeSeries table from IDA file'''
-    log.info("Creating a Time Series from IDA file: %s", path)
-    table = to_table(path)
-    add_columns(table)
+    name , month = name_month(path)
+    log.info("[%s] [%s] Creating a Time Series from IDA file: %s", name, month, path)
+    table = ida_to_table(path)
+    add_columns(table, name, month)
     return table
 
 def load_table(path: str) -> TimeSeries:
@@ -186,17 +187,17 @@ def load_table(path: str) -> TimeSeries:
 
 def save_table(table: TimeSeries, path: str) -> None:
     '''Read TimeSeries table from ECSV file'''
+    name , month = name_month(path)
+    log.info("[%s] [%s] Saving Time Series to ECSV file: %s", name, month, path)
     table.write(path, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
 
-
-def append_table(acc: TimeSeries, t: TimeSeries) -> TimeSeries:
-    return vstack([acc, t])
+def append_table(acc: TimeSeries, table: TimeSeries) -> TimeSeries:
+    return vstack([acc, table])
 
 def do_to_ecsv_single(in_path: str, out_path: str) -> None:
     table = create_table(in_path)
-    log.info("Saving Time Series to ECSV file: %s", out_path)
-    table.write(out_path, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
-
+    save_table(table, out_path)
+   
 # ===========
 # Generic API
 # ===========
@@ -207,7 +208,7 @@ def to_ecsv_single(base_dir: OptStr, name: str,  month: OptDate, exact: OptStr, 
     in_path = os.path.join(in_dir_path, filename)
     out_dir_path = makedirs(out_dir, name)
     filename = os.path.splitext(filename)[0]
-    out_path = os.path.join(in_dir_path, filename + '.ecsv')
+    out_path = os.path.join(out_dir_path, filename + '.ecsv')
     do_to_ecsv_single(in_path, out_path)
    
 def to_ecsv_range(base_dir: OptStr,  name: str, out_dir: str, since: datetime, until: datetime) -> None:
@@ -229,6 +230,7 @@ def to_ecsv_range(base_dir: OptStr,  name: str, out_dir: str, since: datetime, u
 def to_ecsv_combine(base_dir: OptStr,  name: str, since: datetime, until: datetime) -> None:
     in_dir_path = to_phot_dir(base_dir, name)
     months = [m for m in month_range(since, until)]
+    log.info("[%s] Combining months into a single ECSV: %s", name, months)
     search_path = os.path.join(in_dir_path, 'stars*.ecsv')
     candidate_path = list()
     for path in sorted(glob.iglob(search_path)):
@@ -236,7 +238,7 @@ def to_ecsv_combine(base_dir: OptStr,  name: str, since: datetime, until: dateti
         if candidate_month in months:
             candidate_path.append(path)
     if len(candidate_path) < 1:
-        log.warning("Not enough tables to combine. Check input parameters.")
+        log.warning("[%s] Not enough tables to combine. Check input parameters.", name)
         return
     acc_table = load_table(candidate_path[0])
     acc_table.meta['combined'] = [os.path.basename(candidate_path[0])]

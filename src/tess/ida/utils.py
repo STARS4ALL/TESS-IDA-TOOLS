@@ -41,6 +41,10 @@ def month_range(from_month: datetime, to_month: datetime) -> str:
         yield month.strftime('%Y-%m')
         month += relativedelta(months=1)
 
+def name_month(ida_file_path: str) -> tuple:
+    name = os.path.basename(os.path.dirname(ida_file_path))
+    month = os.path.splitext(os.path.basename(ida_file_path))[0].split('_')[1]
+    return name, month
 
 def to_phot_dir(base_dir: str | None, name: str) -> str:
     cwd = os.getcwd() 

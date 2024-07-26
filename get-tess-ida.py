@@ -72,6 +72,11 @@ def makedirs(base_dir: OptStr, name: str) -> str:
         os.makedirs(full_dir_path)
     return full_dir_path
 
+def name_month(ida_file_path: str) -> tuple:
+    name = os.path.basename(os.path.dirname(ida_file_path))
+    month = os.path.splitext(os.path.basename(ida_file_path))[0].split('_')[1]
+    return name, month
+
 # --------------
 # Work functions
 # --------------
@@ -79,18 +84,19 @@ def makedirs(base_dir: OptStr, name: str) -> str:
 def do_ida_single_month(base_url: str, ida_base_dir: str, name: str, month: OptStr, exact: OptStr, timeout: int) -> None:
     url = base_url + '/download'
     target_file = name + '_' + month + '.dat' if not exact else exact
+    _, month1 = name_month(target_file)
     params = {'path': '/' + name, 'files': target_file}
     resp = requests.get(url, params=params, timeout=timeout)
     if resp.status_code == 404:
-        log.warning("No monthly file exits: %s", target_file)
+        log.warning("[%s] [%s] No monthly file exits: %s", name, month1, target_file)
         return
     resp.raise_for_status() # catch other unexpected return code
-    log.info("GET %s [%d OK]", resp.url, resp.status_code)
+    log.info("[%s] [%s] GET %s [%d OK]", name, month1, resp.url, resp.status_code)
     contents = resp.text
     full_dir_path = makedirs(ida_base_dir, name)
     file_path = os.path.join(full_dir_path, target_file)
     with open(file_path, mode='w') as f:
-        log.info("writing %s", file_path)
+        log.info("[%s] [%s] Writing %s", name, month1, file_path)
         f.write(contents)
 
 # ================================
