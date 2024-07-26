@@ -25,6 +25,7 @@ from typing import Union
 import numpy as np
 
 import astropy.units as u
+from astropy.table import vstack
 from astropy.timeseries import TimeSeries 
 from astropy.coordinates import EarthLocation
 from astroplan import Observer
@@ -172,10 +173,24 @@ def add_columns(table: TimeSeries) -> None:
     table[TS.MOON_PHASE] = observer.moon_phase(table['time']) / (np.pi * u.rad)
   
 def create_table(path: str) -> TimeSeries:
+    '''Create TimeSeries table from IDA file'''
     log.info("Creating a Time Series from IDA file: %s", path)
     table = to_table(path)
     add_columns(table)
     return table
+
+def load_table(path: str) -> TimeSeries:
+    '''Read TimeSeries table from ECSV file'''
+    table = TimeSeries.read(path, format='ascii.ecsv', delimiter=',')
+    return table
+
+def save_table(table: TimeSeries, path: str) -> None:
+    '''Read TimeSeries table from ECSV file'''
+    table.write(path, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
+
+
+def append_table(acc: TimeSeries, t: TimeSeries) -> TimeSeries:
+    return vstack([acc, t])
 
 def do_to_ecsv_single(in_path: str, out_path: str) -> None:
     table = create_table(in_path)
@@ -212,7 +227,25 @@ def to_ecsv_range(base_dir: OptStr,  name: str, out_dir: str, since: datetime, u
 
 
 def to_ecsv_combine(base_dir: OptStr,  name: str, since: datetime, until: datetime) -> None:
-    pass
+    in_dir_path = to_phot_dir(base_dir, name)
+    months = [m for m in month_range(since, until)]
+    search_path = os.path.join(in_dir_path, '*.ecsv')
+    candidate_path = list()
+    for path in sorted(glob.iglob(search_path)):
+        candidate_month = os.path.splitext(os.path.basename(path))[0].split('_')[1]
+        if candidate_month in months:
+            candidate_path.append(path)
+    if len(candidate_path) < 1:
+        log.warning("Not enough tables to combine. Check input parameters.")
+        return
+    acc_table = load_table(candidate_path[0])
+    for in_path in candidate_path[1:]:
+        table = load_table(in_path)
+        acc_table = append_table(acc_table, table)
+    dirname = os.path.dirname(candidate_path[0])
+    filename = f'since_{months[0]}_until_{months[-1]}.ecsv'
+    path = os.path.join(dirname, filename)
+    save_table(acc_table, path)
 
 # ================================
 # COMMAND LINE INTERFACE FUNCTIONS
