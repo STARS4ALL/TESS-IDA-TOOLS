@@ -96,9 +96,9 @@ def ida_metadata(path):
     # Convert values from strings to numeric values or nested dictonaries
     header[IKW.NUM_HEADERS] = int(header[IKW.NUM_HEADERS])
     header[IKW.NUM_CHANNELS] = int(header[IKW.NUM_CHANNELS])
-    observer, affil = header[IKW.OBSERVER].split('/')
+    observer, affil = header[IKW.OBSERVER].split(' / ')
     header[IKW.OBSERVER] = {'observer': v_or_n(observer), 'affiliation':v_or_n(affil)}
-    place, town, sub_region, region, country = header[IKW.LOCATION].split('/')
+    place, town, sub_region, region, country = header[IKW.LOCATION].split(' / ')
     header[IKW.LOCATION] = {'place': v_or_n(place), 'town': v_or_n(town), 
      'sub_region': v_or_n(sub_region), 'region': v_or_n(region), 'country': v_or_n(country)}
     latitude, longitude, height = header[IKW.POSITION].split(',')
