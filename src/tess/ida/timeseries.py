@@ -15,7 +15,8 @@ import logging
 import itertools
 
 from datetime import datetime
-from argparse import Namespace
+from argparse import Namespace, ArgumentParser
+from typing import Union
 
 # -------------------
 # Third party imports
@@ -30,6 +31,7 @@ from astroplan import Observer
 
 from lica.cli import execute
 from lica.validators import vfile, vdir, vmonth
+from lica.typing import OptStr
 
 #--------------
 # local imports
@@ -37,13 +39,14 @@ from lica.validators import vfile, vdir, vmonth
 
 from .. import __version__
 from .constants import TEW, T4C, IKW, TS, IDA_HEADER_LEN
-from .utils import cur_month, prev_month, makedirs, v_or_n, month_range
+from .utils import cur_month, prev_month, to_phot_dir, makedirs, v_or_n, month_range
 
 # ----------------
 # Module constants
 # ----------------
 
 DESCRIPTION = "Transform TESS-W IDA monthly files to ECSV"
+OptDate = Union[datetime, None]
 
 # Column names
 IDA_NAMES = TEW.values()
@@ -71,14 +74,6 @@ log = logging.getLogger(__name__.split('.')[-1])
 # -------------------
 # Auxiliary functions
 # -------------------
-
-
-def output_path(path: str, name: str, out_dir: str | None) -> str:
-    full_dir = makedirs(out_dir, name)
-    root, ext = os.path.splitext(path)
-    path = os.path.basename(root)  + '.ecsv'
-    return os.path.join(full_dir, path)
-
 
 
 # =============
@@ -128,7 +123,6 @@ def ida_metadata(path):
 
   
 def to_table(path: str) -> TimeSeries:
-    log.info("Creating a Time Series from IDA file: %s", path)
     header = ida_metadata(path)
     nchannels = header[IKW.NUM_CHANNELS]
     names = IDA_NAMES if nchannels == 1 else IDA_NAMES_4C
@@ -177,25 +171,48 @@ def add_columns(table: TimeSeries) -> None:
     log.debug("Adding new %s column", TS.MOON_PHASE)
     table[TS.MOON_PHASE] = observer.moon_phase(table['time']) / (np.pi * u.rad)
   
-    
+def create_table(path: str) -> TimeSeries:
+    log.info("Creating a Time Series from IDA file: %s", path)
+    table = to_table(path)
+    add_columns(table)
+    return table
+
+def do_to_ecsv_single(in_path: str, out_path: str) -> None:
+    table = create_table(in_path)
+    log.info("Saving Time Series to ECSV file: %s", out_path)
+    table.write(out_path, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
+
 # ===========
 # Generic API
 # ===========
 
-def to_ecsv_single(path: str, out_dir: str) -> None:
-    table = to_table(path)
-    add_columns(table)
-    name = table.meta['ida'][IKW.PHOT_NAME]
-    path = output_path(path, name, out_dir)
-    log.info("Saving Time Series to ECSV file: %s", path)
-    table.write(path, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
+def to_ecsv_single(base_dir: OptStr, name: str,  month: OptDate, exact: OptStr, out_dir: str) -> None:
+    in_dir_path = to_phot_dir(base_dir, name)
+    filename = name + '_' + month.strftime('%Y-%m') + '.dat' if not exact else exact
+    in_path = os.path.join(in_dir_path, filename)
+    out_dir_path = makedirs(out_dir, name)
+    filename = os.path.splitext(filename)[0]
+    out_path = os.path.join(in_dir_path, filename + '.ecsv')
+    do_to_ecsv_single(in_path, out_path)
    
-def to_ecsv_range(in_dir: str, out_dir: str, since: datetime, until: datetime) -> None:
+def to_ecsv_range(base_dir: OptStr,  name: str, out_dir: str, since: datetime, until: datetime) -> None:
+    in_dir_path = to_phot_dir(base_dir, name)
     months = [m for m in month_range(since, until)]
-    log.info(months)
-    search_path = os.path.join(in_dir, '*.dat')
-    for path in glob.iglob(search_path):
-        log.info(os.path.splitext(os.path.basename(path))[0])
+    search_path = os.path.join(in_dir_path, '*.dat')
+    candidate_path = list()
+    for path in sorted(glob.iglob(search_path)):
+        candidate_month = os.path.splitext(os.path.basename(path))[0].split('_')[1]
+        if candidate_month in months:
+            candidate_path.append(path)
+    for in_path in candidate_path:
+        filename = os.path.splitext(os.path.basename(in_path))[0] + '.ecsv'
+        dirname = makedirs(out_dir, name)
+        out_path = os.path.join(dirname, filename)
+        do_to_ecsv_single(in_path, out_path)
+
+
+def to_ecsv_combine(base_dir: OptStr,  name: str, since: datetime, until: datetime) -> None:
+    pass
 
 # ================================
 # COMMAND LINE INTERFACE FUNCTIONS
@@ -203,36 +220,59 @@ def to_ecsv_range(in_dir: str, out_dir: str, since: datetime, until: datetime) -
 
 def cli_to_ecsv_single(args: Namespace) -> None:
     to_ecsv_single(
-        path = args.input_file,
+        base_dir = args.in_dir,
+        name = args.name,
+        month = args.month,
+        exact = args.exact,
         out_dir = args.out_dir,
     )
 
 def cli_to_ecsv_range(args: Namespace) -> None:
     to_ecsv_range(
-        in_dir = args.input_dir,
+        base_dir = args.in_dir,
+        name = args.name,
         out_dir = args.out_dir,
+        since = args.since,
+        until = args.until,
+    )
+
+def cli_to_ecsv_combine(args: Namespace) -> None:
+    to_ecsv_combine(
+        base_dir = args.in_dir,
+        name = args.name,
         since = args.since,
         until = args.until,
     )
    
 
-def add_args(parser):
+def add_args(parser: ArgumentParser) -> ArgumentParser:
      # Now parse the application specific parts
     subparser = parser.add_subparsers(dest='command')
-    parse_single = subparser.add_parser('month', help='Transform single IDA monthly file to ECSV')
-    parse_single.add_argument('-i', '--input-file', type=vfile, required=True, help='Input IDA file')
-    parse_single.add_argument('-o', '--out-dir', type=str, default=None, help='Output ECSV base directory')
-    parse_range = subparser.add_parser('range', help='Transform a range of IDA monthly files into a single ECSV')
-    parse_range.add_argument('-i', '--input-dir', type=vdir, required=True, help='Input IDA base dir')
-    parse_range.add_argument('-s', '--since',  type=vmonth, default=prev_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s)')
-    parse_range.add_argument('-u', '--until',  type=vmonth, default=cur_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s)')
-    parse_range.add_argument('-o', '--out-dir', type=str, default=None, help='Output ECSV base directory')
+    parser_single = subparser.add_parser('single', help='Convert to ECSV a single monthly file from a photometer')
+    parser_single.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
+    parser_single.add_argument('-i', '--in-dir', type=vdir, default=None, help='Input IDA base directory')
+    parser_single.add_argument('-o', '--out-dir', type=str, default=None, help='Output ECSV base directory')
+    group1 = parser_single.add_mutually_exclusive_group(required=True)
+    group1.add_argument('-e', '--exact', type=str, default=None, help='Specific monthly file name')
+    group1.add_argument('-m', '--month',  type=vmonth, default=None, metavar='<YYYY-MM>', help='Year and Month')
+    parser_range = subparser.add_parser('range', help='Convert to ECSV a range of IDA monthly files from a photometer')
+    parser_range.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
+    parser_range.add_argument('-i', '--in-dir', type=vdir, default=None, help='Input IDA base directory')
+    parser_range.add_argument('-o', '--out-dir', type=str, default=None, help='Output ECSV base directory')
+    parser_range.add_argument('-s', '--since',  type=vmonth, default=prev_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
+    parser_range.add_argument('-u', '--until',  type=vmonth, default=cur_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
+    parser_comb = subparser.add_parser('combine', help='Combines a range of monthly ECSV files into a simnle ECSV')
+    parser_comb.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
+    parser_comb.add_argument('-i', '--in-dir', type=vdir, default=None, help='Input ECSV base directory')
+    parser_comb.add_argument('-s', '--since',  type=vmonth, default=prev_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
+    parser_comb.add_argument('-u', '--until',  type=vmonth, default=cur_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s') 
     return parser
 
 
 CMD_TABLE = {
-    'month': cli_to_ecsv_single,
+    'single': cli_to_ecsv_single,
     'range': cli_to_ecsv_range,
+    'combine':  cli_to_ecsv_combine,
 }
 
 def cli_to_ecsv(args: Namespace) -> None:
