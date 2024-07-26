@@ -113,6 +113,7 @@ python get-tess-ida.py --console single --exact stars4_2016-09_2.dat --name star
 3. Download monthly files since a given month until another
 
 If no `--since` parameter is given, defaults to last month.
+
 If no `--until` parameter is given, defaults to current month.
 
 ```bash
@@ -122,6 +123,7 @@ python get-tess-ida.py --console range --since 2023-3 --until 2023-6 --name star
 4. Download a range of monthly files for a selected set of photometers
 
 If no `--since` parameter is given, defaults to last month.
+
 If no `--until` parameter is given, defaults to current month.
 
 Instead of names, we pass just photometer numbers. 
