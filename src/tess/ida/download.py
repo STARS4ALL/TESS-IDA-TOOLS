@@ -24,8 +24,6 @@ import decouple
 import aiohttp
 import aiofiles
 
-from pubsub import pub
-
 from dateutil.relativedelta import relativedelta
 
 from lica.cli import async_execute
@@ -37,7 +35,6 @@ from lica.typing import OptStr
 # -------------
 
 from .. import __version__
-from .database import MARKER # Needed to initialize the database module
 from .utils import cur_month, prev_month, group, month_range, makedirs, name_month
 
 # ----------------
@@ -182,10 +179,8 @@ async def cli_get_ida(args: Namespace) -> None:
     '''The main entry point specified by pyproject.toml'''
     base_url = decouple.config('IDA_URL')
     func = CMD_TABLE[args.command]
-    pub.sendMessage('load_database')
     await func(base_url, args)
     log.info("done!")
-    pub.sendMessage('save_database')
 
 
 def main() -> None:
