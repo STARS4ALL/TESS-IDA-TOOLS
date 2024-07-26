@@ -68,11 +68,10 @@ usage: ida.main [-h] [--version] [--console] [--log-file <FILE>] [--verbose | --
 Get TESS-W IDA monthly files from NextCloud server
 
 positional arguments:
-  {month,year,range,selected}
-    month               Download single monthly file
-    year                Download a year of monthly files
-    range               Download from a month range
-    selected            Download selected photometers in a month range
+  {single,range,photometers}
+    single              Download single monthly file from a photometer
+    range               Download a month range from a photometer
+    photometers         Download a month range from selected photometers
 
 options:
   -h, --help            show this help message and exit
@@ -95,7 +94,7 @@ options:
   -h, --help            show this help message and exit
   -n NAME, --name NAME  Photometer name
   -s <YYYY-MM>, --since <YYYY-MM>
-                        Year and Month
+                        Year and Month (defaults to previous month)
   -u <YYYY-MM>, --until <YYYY-MM>
                         Year and Month (defaults to current month)
 ```

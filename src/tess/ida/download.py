@@ -28,6 +28,7 @@ from dateutil.relativedelta import relativedelta
 
 from lica.cli import async_execute
 from lica.validators import vmonth, vyear
+from lica.typing import OptStr
 
 #--------------
 # local imports
@@ -54,7 +55,7 @@ log = logging.getLogger(__name__.split('.')[-1])
 # -------------------
 
 
-async def do_ida_single(session, base_url: str, ida_base_dir: str, name: str, month: str|None, exact: str|None, timeout: int) -> None:
+async def do_ida_single(session, base_url: str, ida_base_dir: str, name: str, month: OptStr, exact: OptStr, timeout: int) -> None:
     url = base_url + '/download'
     target_file = name + '_' + month + '.dat' if not exact else exact
     params = {'path': '/' + name, 'files': target_file}
@@ -79,7 +80,7 @@ async def do_ida_range(session, base_url: str, ida_base_dir: str, name: str, sin
 # Generic API
 # ===========
 
-async def ida_single(base_url: str, ida_base_dir: str, name: str, month: str|None, exact:str|None, timeout:int = 4) -> None:
+async def ida_single(base_url: str, ida_base_dir: str, name: str, month: OptStr, exact:OptStr, timeout:int = 4) -> None:
     async with aiohttp.ClientSession() as session:
         if not exact:
             month = month.strftime('%Y-%m')
@@ -144,19 +145,19 @@ async def cli_ida_photometers(base_url: str, args: Namespace) -> None:
 def add_args(parser: ArgumentParser) -> ArgumentParser:
     # Now parse the application specific parts
     subparser = parser.add_subparsers(dest='command')
-    parser_month = subparser.add_parser('month', help='Download single monthly file')
+    parser_month = subparser.add_parser('single', help='Download single monthly file from a photometer')
     parser_month.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
     parser_month.add_argument('-o', '--out-dir', type=str, default=None, help='Output base directory')
     group1 = parser_month.add_mutually_exclusive_group(required=True)
     group1.add_argument('-e', '--exact', type=str, default=None, help='Specific monthly file name')
     group1.add_argument('-m', '--month',  type=vmonth, default=None, metavar='<YYYY-MM>', help='Year and Month')
-    parser_since = subparser.add_parser('range', help='Download from a month range')
+    parser_since = subparser.add_parser('range', help='Download a month range from a photometer')
     parser_since.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
     parser_since.add_argument('-s', '--since',  type=vmonth, default=prev_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
     parser_since.add_argument('-u', '--until',  type=vmonth, default=cur_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
     parser_since.add_argument('-o', '--out-dir', type=str, default=None, help='Output IDA base directory')
     parser_since.add_argument('-c', '--concurrent', type=int, metavar='<N>', choices=[1,2,4,6,8], default=4, help='Number of concurrent downloads (defaults to %(default)s)')
-    parser_sel = subparser.add_parser('photometers', help='Download selected photometers in a month range')
+    parser_sel = subparser.add_parser('photometers', help='Download a month range for selected photometers')
     group2 = parser_sel.add_mutually_exclusive_group(required=True)
     group2.add_argument('-l', '--list', type=int, default=None, nargs='+', metavar='<N>', help='Photometer number list')
     group2.add_argument('-r', '--range', type=int, default=None, metavar='<N>', nargs=2, help='Photometer number range')
@@ -168,7 +169,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
 
 
 CMD_TABLE = {
-    'month': cli_ida_single,
+    'single': cli_ida_single,
     'range': cli_ida_range,
     'photometers': cli_ida_photometers,
 }
