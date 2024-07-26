@@ -103,26 +103,21 @@ options:
 
 1. Download single month for a given photometer
 ```bash
-python get-tess-ida.py --console month --name stars1 --month 2023-4
+python get-tess-ida.py --console single --month 2023-4 --name stars1 
 ```
 
 2. Download an ***specific file*** for a given photometer
 ```bash
-python get-tess-ida.py --console month --name stars4 --exact stars4_2016-09_2.dat
+python get-tess-ida.py --console single --exact stars4_2016-09_2.dat --name stars4 
 ```
 
-3. Download a whole year for a given photometer
-```bash
-python get-tess-ida.py --console year --name stars1 --year 2023
-```
-
-4. Download monthly files since a given month until another
+3. Download monthly files since a given month until another
 
 If no `--since` parameter is given, defaults to last month.
 If no `--until` parameter is given, defaults to current month.
 
 ```bash
-python get-tess-ida.py --console since --name stars1 --since 2023-3 --until 2023-6
+python get-tess-ida.py --console range --since 2023-3 --until 2023-6 --name stars1 
 ```
 
 
@@ -136,12 +131,12 @@ Instead of names, we pass just photometer numbers.
 The script below will download data from photometers `stars1` up to `stars5` since month `2023-06` until current month
 
 ```bash
-python get-tess-ida.py --console selected --range 1 5 --since 2023-06
+python get-tess-ida.py --console photometers --range 1 5 --since 2023-06
 ```
 
 The script below will download data from selected photometers `stars1` , `stars243`, `stars703` 
 since last month until current month
 
 ```bash
-python get-tess-ida.py --console selected --list 1 245 703
+python get-tess-ida.py --console photometers --list 1 245 703
 ```

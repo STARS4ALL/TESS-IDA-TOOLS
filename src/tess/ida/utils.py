@@ -41,11 +41,17 @@ def month_range(from_month: datetime, to_month: datetime) -> str:
         yield month.strftime('%Y-%m')
         month += relativedelta(months=1)
 
-def makedirs(base_dir: str | None, name: str) -> str:
+
+def to_phot_dir(base_dir: str | None, name: str) -> str:
     cwd = os.getcwd() 
     base_dir = cwd if base_dir is None else base_dir
     base_dir = os.path.join(cwd, base_dir) if not os.path.isabs(base_dir) else base_dir
     full_dir_path = os.path.join(base_dir, name)
+    return full_dir_path
+   
+
+def makedirs(base_dir: str | None, name: str) -> str:
+    full_dir_path = to_phot_dir(base_dir, name)
     if not os.path.isdir(full_dir_path):
         os.makedirs(full_dir_path)
     return full_dir_path
