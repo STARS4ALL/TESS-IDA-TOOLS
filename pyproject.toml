@@ -32,11 +32,12 @@ dependencies = [
   'python-decouple',   # Get info from enviromental variables
   'python-dateutil',   # date utilities
   'tomli',             # TOML reader for Python < 3.11
+  'pypubsub',          # Synchronous Publish/Subscribe support to decouple modules
   'aiofiles',          # Asyncio support for file I/O
   'aiohttp',
   'aiodns',
   'astropy',
-  'astroplan',        # sister project from the astropy project
+  'astroplan',         # sister project from the astropy project
   'lica@git+https://github.com/guaix-ucm/lica@main', # own assorted utilities
 ]
 
