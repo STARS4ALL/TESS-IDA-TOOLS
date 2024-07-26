@@ -14,7 +14,7 @@ import logging
 
 
 from datetime import datetime
-from argparse import Namespace
+from argparse import Namespace, ArgumentParser
 
 # -------------------
 # Third party imports
@@ -54,7 +54,7 @@ log = logging.getLogger(__name__.split('.')[-1])
 # -------------------
 
 
-async def do_ida_single_month(session, base_url: str, ida_base_dir: str, name: str, month: str|None, exact: str|None, timeout: int) -> None:
+async def do_ida_single(session, base_url: str, ida_base_dir: str, name: str, month: str|None, exact: str|None, timeout: int) -> None:
     url = base_url + '/download'
     target_file = name + '_' + month + '.dat' if not exact else exact
     params = {'path': '/' + name, 'files': target_file}
@@ -72,27 +72,18 @@ async def do_ida_single_month(session, base_url: str, ida_base_dir: str, name: s
 
 async def do_ida_range(session, base_url: str, ida_base_dir: str, name: str, since: datetime, until: datetime, N: int, timeout: int) -> None:
     for grp in group(N, month_range(since, until)):
-        tasks = [asyncio.create_task(do_ida_single_month(session, base_url, ida_base_dir, name, m, None, timeout)) for m in grp]
+        tasks = [asyncio.create_task(do_ida_single(session, base_url, ida_base_dir, name, m, None, timeout)) for m in grp]
         await asyncio.gather(*tasks)
 
 # ===========
 # Generic API
 # ===========
 
-async def ida_single_month(base_url: str, ida_base_dir: str, name: str, month: str|None, exact:str|None, timeout:int = 4) -> None:
+async def ida_single(base_url: str, ida_base_dir: str, name: str, month: str|None, exact:str|None, timeout:int = 4) -> None:
     async with aiohttp.ClientSession() as session:
         if not exact:
             month = month.strftime('%Y-%m')
-        await do_ida_single_month(session, base_url, ida_base_dir, name, month, exact, timeout)
-
-
-async def ida_year(base_url: str, ida_base_dir: str, name: str, year: datetime, concurrent: int, timeout:int = 4) -> None:
-    year = year.replace(month=1, day=1)
-    async with aiohttp.ClientSession() as session:
-        for grp in group(concurrent, range(0,12)):
-            tasks = [asyncio.create_task(do_ida_single_month(session, base_url, ida_base_dir, name, 
-                (year + relativedelta(months=m)).strftime('%Y-%m'), None, timeout)) for m in grp]
-            await asyncio.gather(*tasks)
+        await do_ida_single(session, base_url, ida_base_dir, name, month, exact, timeout)
 
 
 async def ida_range(base_url: str, ida_base_dir: str, name: str, since: datetime, until: datetime, concurrent: int, timeout:int = 4) -> None:
@@ -100,7 +91,7 @@ async def ida_range(base_url: str, ida_base_dir: str, name: str, since: datetime
         await do_ida_range(session, base_url, ida_base_dir, name, since, until, concurrent, timeout)
 
 
-async def ida_selected(base_url: str, ida_base_dir: str, rang: list[int], seq: list[int], since: datetime, until: datetime, concurrent: int, timeout:int = 4) -> None:
+async def ida_photometers(base_url: str, ida_base_dir: str, rang: list[int], seq: list[int], since: datetime, until: datetime, concurrent: int, timeout:int = 4) -> None:
     async with aiohttp.ClientSession() as session:
         rang = sorted(rang) if rang is not None else None
         seq = sorted(seq) if seq is not None else None
@@ -117,23 +108,13 @@ async def ida_selected(base_url: str, ida_base_dir: str, rang: list[int], seq: l
 # COMMAND LINE INTERFACE FUNCTIONS
 # ================================
 
-async def cli_ida_single_month(base_url: str, args: Namespace) -> None:
-    await ida_single_month(
+async def cli_ida_single(base_url: str, args: Namespace) -> None:
+    await ida_single(
         base_url = base_url,
         ida_base_dir = args.out_dir,
         name = args.name,
         month = args.month,
         exact = args.exact
-    )
-
-
-async def cli_ida_year(base_url: str, args: Namespace) -> None:
-    await ida_year(
-        base_url = base_url,
-        ida_base_dir = args.out_dir,
-        name = args.name,
-        year = args.year,
-        concurrent = args.concurrent,
     )
 
 
@@ -148,8 +129,8 @@ async def cli_ida_range(base_url: str, args: Namespace) -> None:
     )
 
 
-async def cli_ida_selected(base_url: str, args: Namespace) -> None:
-    await ida_selected(
+async def cli_ida_photometers(base_url: str, args: Namespace) -> None:
+    await ida_photometers(
         base_url = base_url,
         ida_base_dir = args.out_dir,
         seq = args.list,
@@ -160,7 +141,7 @@ async def cli_ida_selected(base_url: str, args: Namespace) -> None:
     )
 
 
-def add_args(parser):
+def add_args(parser: ArgumentParser) -> ArgumentParser:
     # Now parse the application specific parts
     subparser = parser.add_subparsers(dest='command')
     parser_month = subparser.add_parser('month', help='Download single monthly file')
@@ -169,18 +150,13 @@ def add_args(parser):
     group1 = parser_month.add_mutually_exclusive_group(required=True)
     group1.add_argument('-e', '--exact', type=str, default=None, help='Specific monthly file name')
     group1.add_argument('-m', '--month',  type=vmonth, default=None, metavar='<YYYY-MM>', help='Year and Month')
-    parser_year = subparser.add_parser('year', help='Download a year of monthly files')
-    parser_year.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
-    parser_year.add_argument('-y', '--year', type=vyear, metavar='<YYYY>', required=True, help='Year')
-    parser_year.add_argument('-o', '--out-dir', type=str, default=None, help='Output IDA base directory')
-    parser_year.add_argument('-c', '--concurrent', type=int, metavar='<N>', choices=[1,2,3,4], default=4, help='Number of concurrent downloads (defaults to %(default)s)')
     parser_since = subparser.add_parser('range', help='Download from a month range')
     parser_since.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
     parser_since.add_argument('-s', '--since',  type=vmonth, default=prev_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
     parser_since.add_argument('-u', '--until',  type=vmonth, default=cur_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
     parser_since.add_argument('-o', '--out-dir', type=str, default=None, help='Output IDA base directory')
     parser_since.add_argument('-c', '--concurrent', type=int, metavar='<N>', choices=[1,2,4,6,8], default=4, help='Number of concurrent downloads (defaults to %(default)s)')
-    parser_sel = subparser.add_parser('selected', help='Download selected photometers in a month range')
+    parser_sel = subparser.add_parser('photometers', help='Download selected photometers in a month range')
     group2 = parser_sel.add_mutually_exclusive_group(required=True)
     group2.add_argument('-l', '--list', type=int, default=None, nargs='+', metavar='<N>', help='Photometer number list')
     group2.add_argument('-r', '--range', type=int, default=None, metavar='<N>', nargs=2, help='Photometer number range')
@@ -192,10 +168,9 @@ def add_args(parser):
 
 
 CMD_TABLE = {
-    'month': cli_ida_single_month,
-    'year': cli_ida_year,
+    'month': cli_ida_single,
     'range': cli_ida_range,
-    'selected': cli_ida_selected,
+    'photometers': cli_ida_photometers,
 }
 
 async def cli_get_ida(args: Namespace) -> None:
