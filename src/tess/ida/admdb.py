@@ -21,8 +21,7 @@ from collections.abc import Sequence
 
 import decouple
 
-from astropy.table import Table, QTable, Row
-import astropy.units as u
+from astropy.table import Table, Row
 
 from lica.cli import execute
 from lica.validators import vfile, vdir, vmonth
@@ -54,8 +53,7 @@ log = logging.getLogger(__name__.split('.')[-1])
 try:
     theHashesTable = None
     theHashesFile = decouple.config('HASHES_TABLE')
-
-    from astropy.table import SortedArray, SCEngine
+    from astropy.table import SCEngine
 
     def adm_table_hashes_load() -> None:
         global theHashesTable, theHashesFile
@@ -96,18 +94,17 @@ except decouple.UndefinedValueError:
     def adm_table_hashes_update(data: Sequence[str, str]) -> None:
         pass
 
-
-
   
 try:
     theLocationsTable = None
     theLocationsFile = decouple.config('COORDS_TABLE')
+    from astropy.table import SCEngine
 
     def adm_table_coords_load() -> None:
         global theLocationsTable, theLocationsFile
         log.info("Loading administrative Table from %s", theLocationsFile)
-        theLocationsTable = QTable.read(theLocationsFile, format='ascii.ecsv', delimiter=',')
-        theLocationsTable.add_index('phot_name', unique=True)
+        theLocationsTable = Table.read(theLocationsFile, format='ascii.ecsv', delimiter=',')
+        theLocationsTable.add_index('phot_name', unique=True, engine=SCEngine)
 
     def adm_table_coords_save() -> None:
         global theLocationsTable, theLocationsFile
@@ -157,20 +154,18 @@ def cli_schema_create(args: Namespace) -> None:
         except decouple.UndefinedValueError as e:
             table_files.append(None)
             log.warning("environment variable %s not found in .env file", env_var)
-
     if table_files[0]:
         log.info("Creating an empty administrative Table file: %s", table_files[0])
         table = Table([tuple(), tuple()], 
             names=('filename', 'hash'), 
-            dtype=['str', 'str']
+            dtype=('str', 'str')
         )
         table.write(table_files[0], format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
     if table_files[1]:
         log.info("Creating an empty administrative Table file: %s", table_files[1])
-        table = QTable([tuple(), tuple(), tuple(), tuple()], 
+        table = Table([tuple(), tuple(), tuple(), tuple()], 
             names=('phot_name', 'latitude', 'longitude', 'height'), 
-            dtype=('str', 'float','float','float'),
-            units=(None, u.deg, u.deg, u.m)
+            dtype=('str', 'float','float','float')
         )
         table.write(table_files[1], format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
 
@@ -178,50 +173,43 @@ def cli_schema_create(args: Namespace) -> None:
 def cli_coords_add(args: Namespace) -> None:
     coords_file = decouple.config('COORDS_TABLE')
     log.info("Loading administrative Table from %s", coords_file)
-    table = QTable.read(coords_file, format='ascii.ecsv', delimiter=',')
+    table = Table.read(coords_file, format='ascii.ecsv', delimiter=',')
     table.add_index('phot_name', unique=True)
-    name = args.name
-    lati = args.latitude*u.deg
-    longi = args.longitude*u.deg
-    h =  args.height*u.m
-    log.info("[%s] Adding coordinates entry: Lat = %s, Long = %s, Height = %s", args.name, lati, longi, h)
+    log.info("[%s] Adding coordinates entry: Lat = %s, Long = %s, Height = %s", 
+        args.name, args.latitude, args.longitude, args.height)
     try:
-        table.add_row((name, lati,longi,h))
+        table.add_row((args.name, args.latitude,args.longitude,args.height))
     except ValueError:
-        log.error("[%s] Coordinates entry already exists. Try subcommand 'update' instead", name)
+        log.error("[%s] Coordinates entry already exists. Try subcommand 'update' instead", args.name)
     table.write(coords_file, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
 
 
 def cli_coords_update(args: Namespace) -> None:
     coords_file = decouple.config('COORDS_TABLE')
     log.info("Loading administrative Table from %s", coords_file)
-    table = QTable.read(coords_file, format='ascii.ecsv', delimiter=',')
+    table = Table.read(coords_file, format='ascii.ecsv', delimiter=',')
     table.add_index('phot_name', unique=True)
-    name = args.name
-    lati = args.latitude
-    longi = args.longitude
-    h =  args.height
     try:
         res = table.loc[args.name]
         log.info("[%s] Found coordinates entry", args.name)
     except KeyError:
         log.warning("[%s] Coordnates entry not found", args.name)
     else:
-        if lati is not None:
-            table['latitude'][res.index] = lati * u.deg
-        if longi is not None:
-            table['longitude'][res.index] = longi * u.deg
-        if h is not None:
-            table['height'][res.index] = h * u.m
+        if args.latitude is not None:
+            table['latitude'][res.index] = args.latitude
+        if args.longitude is not None:
+            table['longitude'][res.index] = args.longitude
+        if args.height is not None:
+            table['height'][res.index] = args.height
         log.info("[%s] Modified coordinates entry", args.name)
-        log.warning("[%s] Sun/Moon data no longer valid. Delete your %s ECSV files and re-run the pipeline", name, name)
+        log.warning("[%s] Sun/Moon data no longer valid. Delete your %s ECSV files and re-run the pipeline", args.name, args.name)
     table.write(coords_file, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
 
 
 def cli_coords_delete(args: Namespace) -> None:
     coords_file = decouple.config('COORDS_TABLE')
     log.info("Loading administrative Table from %s", coords_file)
-    table = QTable.read(coords_file, format='ascii.ecsv', delimiter=',')
+    table = Table.read(coords_file, format='ascii.ecsv', delimiter=',')
     table.add_index('phot_name', unique=True)
     try:
         res = table.loc[args.name]

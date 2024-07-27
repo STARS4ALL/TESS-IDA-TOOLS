@@ -119,12 +119,14 @@ def ida_metadata(path, fix=False):
     except TypeError:
         if not fix:
             log.error("[%s] [%s] Unknown Observer coordinates", name, month)
-            log.warning("[%s] [%s] Add a location to adm database locations table & Re-run with --fix", name, month)
+            log.error("[%s] [%s] Add coordinates to adm coordinates table & re-run with --fix", name, month)
             raise NoCoordinatesError
         coords = adm_table_coords_lookup(name)
         if not coords:
-            log.error("[%s] [%s] Could not find alternative coordinates", name, month)
+            log.error("[%s] [%s] Could not find alternative coordinates in the adm coordinates table", name, month)
             raise NoCoordinatesError
+        log.warning("[%s] [%s] Fixed alternative coordinates from the adm coordinates table", name, month)
+        header[IKW.POSITION] = {'latitude': coords[1], 'longitude': coords[2], 'height': coords[3]}
     header[IKW.FOV] = float(header[IKW.FOV])
     header[IKW.COVER_OFFSET] = float(header[IKW.COVER_OFFSET])
     header[IKW.NUM_COLS] = int(header[IKW.NUM_COLS])
