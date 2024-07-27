@@ -33,7 +33,7 @@ from lica.typing import OptStr
 # -------------
 
 from .. import __version__
-from .admdb import MARKER # Needed to initialize the database module
+from .admdb import adm_dbase_load, adm_dbase_save
 from .utils import cur_month, prev_month, group, month_range, makedirs
 from .download import ida_single, ida_range
 from .timeseries import to_ecsv_single, to_ecsv_range, to_ecsv_combine
@@ -106,7 +106,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
     parser_single.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
     parser_single.add_argument('-i', '--in-dir', type=str, default=None, help='IDA download files base directory')
     parser_single.add_argument('-o', '--out-dir', type=str, default=None, help='Output ECSV base directory')
-    parser_single.add_argument('-f', '--fix', action='store-true', help='Fix unknown location')
+    parser_single.add_argument('-f', '--fix', action='store_true', help='Fix unknown location')
     group1 = parser_single.add_mutually_exclusive_group(required=True)
     group1.add_argument('-e', '--exact', type=str, default=None, help='Specific monthly file name')
     group1.add_argument('-m', '--month',  type=vmonth, default=None, metavar='<YYYY-MM>', help='Year and Month')
@@ -116,7 +116,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
     parser_range.add_argument('-u', '--until',  type=vmonth, default=cur_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
     parser_range.add_argument('-i', '--in-dir', type=str, default=None, help='IDA download files base directory')
     parser_range.add_argument('-o', '--out-dir', type=str, default=None, help='Output IDA base directory')
-    parser_range.add_argument('-f', '--fix', action='store-true', help='Fix unknown location')
+    parser_range.add_argument('-f', '--fix', action='store_true', help='Fix unknown location')
     parser_range.add_argument('-c', '--concurrent', type=int, metavar='<N>', choices=[1,2,4,6,8], default=4, help='Number of concurrent downloads (defaults to %(default)s)')
     return parser
 
@@ -130,10 +130,10 @@ async def cli_pipeline(args: Namespace) -> None:
     '''The main entry point specified by pyproject.toml'''
     base_url = decouple.config('IDA_URL')
     func = CMD_TABLE[args.command]
-    pub.sendMessage('admdb_load')
+    adm_dbase_load()
     await func(base_url, args)
     log.info("done!")
-    pub.sendMessage('admdb_save')
+    adm_dbase_save()
 
 
 def main() -> None:

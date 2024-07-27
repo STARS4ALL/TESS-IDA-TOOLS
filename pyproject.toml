@@ -31,8 +31,6 @@ dependencies = [
   'StrEnum',           # String Enums for Python < 3.11
   'python-decouple',   # Get info from enviromental variables
   'python-dateutil',   # date utilities
-  'tomli',             # TOML reader for Python < 3.11
-  'pypubsub',          # Synchronous Publish/Subscribe support to decouple modules
   'aiofiles',          # Asyncio support for file I/O
   'aiohttp',
   'aiodns',
@@ -56,7 +54,7 @@ Repository = "https://github.com/STARS4ALL/TESS-IDA-TOOLS.git"
 tess-ida-get = "tess.ida.download:main"
 tess-ida-ecsv = "tess.ida.timeseries:main"
 tess-ida-pipe = "tess.ida.pipeline:main"
-tess-ida-schema = "tess.ida.admdb:main"
+tess-ida-db = "tess.ida.admdb:main"
 
 # pyproject.toml
 # Automatically generates a _version-py file from with Git information
