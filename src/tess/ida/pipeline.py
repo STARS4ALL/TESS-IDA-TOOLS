@@ -20,8 +20,6 @@ from argparse import Namespace, ArgumentParser
 # Third party imports
 # -------------------
 
-from pubsub import pub
-
 import decouple
 
 from lica.cli import async_execute
@@ -60,14 +58,16 @@ log = logging.getLogger(__name__.split('.')[-1])
 # Generic API
 # ===========
 
-async def pipe_single(base_url: str, ida_base_dir: OptStr, ecsv_base_dir: OptStr, name: str, month: OptStr, exact:OptStr) -> None:
-    await ida_single(base_url, ida_base_dir, name, month, exact, timeout = 4)
+async def pipe_single(base_url: str, ida_base_dir: OptStr, ecsv_base_dir: OptStr, 
+    name: str, month: OptStr, exact:OptStr, fix: bool) -> None:
+    await ida_single(base_url, ida_base_dir, name, month, exact, fix, timeout = 4)
     await asyncio.to_thread(to_ecsv_single, ida_base_dir,  name,  month, exact, ecsv_base_dir)
 
 
-async def pipe_range(base_url: str, ida_base_dir: OptStr, ecsv_base_dir: OptStr, name: str, since: datetime, until: datetime, concurrent: int, timeout:int = 4) -> None:
-    await ida_range(base_url, ida_base_dir, name, since, until, concurrent, timeout = 4)
-    await asyncio.to_thread(to_ecsv_range, ida_base_dir, name, ecsv_base_dir, since, until)
+async def pipe_range(base_url: str, ida_base_dir: OptStr, ecsv_base_dir: OptStr, 
+    name: str, since: datetime, until: datetime, fix: bool, concurrent: int, timeout:int = 4) -> None:
+    await ida_range(base_url, ida_base_dir, name, since, until, concurrent,  timeout)
+    await asyncio.to_thread(to_ecsv_range, ida_base_dir, name, ecsv_base_dir, since, until, fix)
     await asyncio.to_thread(to_ecsv_combine, ecsv_base_dir,  name, since, until)
 
 # ================================
@@ -81,7 +81,8 @@ async def cli_pipe_single(base_url: str, args: Namespace) -> None:
         ecsv_base_dir = args.out_dir,
         name = args.name,
         month = args.month,
-        exact = args.exact
+        exact = args.exact,
+        fix = True if args.fix else False,
     )
 
 
@@ -93,6 +94,7 @@ async def cli_pipe_range(base_url: str, args: Namespace) -> None:
         name = args.name, 
         since = args.since, 
         until = args.until, 
+        fix = True if args.fix else False,
         concurrent = args.concurrent
     )
 

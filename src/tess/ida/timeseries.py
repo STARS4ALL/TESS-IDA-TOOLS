@@ -92,7 +92,7 @@ class NoCoordinatesError(Exception):
 # =============
 
 
-def ida_metadata(path, fix=False):
+def ida_metadata(path, fix):
     # Reads the whole header, strips off the starting '# ' and trailing '\n'
     name, month = name_month(path)
     with open(path) as f:
@@ -125,8 +125,10 @@ def ida_metadata(path, fix=False):
         if not coords:
             log.error("[%s] [%s] Could not find alternative coordinates in the adm coordinates table", name, month)
             raise NoCoordinatesError
-        log.warning("[%s] [%s] Fixed alternative coordinates from the adm coordinates table", name, month)
-        header[IKW.POSITION] = {'latitude': coords[1], 'longitude': coords[2], 'height': coords[3]}
+        _, lati, longi, h = coords
+        log.warning("[%s] [%s] Fixed alternative coordinates (lat: %f, long: %f, h: %f) from the adm coordinates table", 
+            name, month, lati, longi, h)
+        header[IKW.POSITION] = {'latitude': lati, 'longitude': longi, 'height': h}
     header[IKW.FOV] = float(header[IKW.FOV])
     header[IKW.COVER_OFFSET] = float(header[IKW.COVER_OFFSET])
     header[IKW.NUM_COLS] = int(header[IKW.NUM_COLS])
@@ -147,8 +149,8 @@ def ida_metadata(path, fix=False):
     return header
 
   
-def ida_to_table(path: str) -> TimeSeries:
-    header = ida_metadata(path)
+def ida_to_table(path: str, fix: bool) -> TimeSeries:
+    header = ida_metadata(path, fix)
     nchannels = header[IKW.NUM_CHANNELS]
     names = IDA_NAMES if nchannels == 1 else IDA_NAMES_4C
     converters = IDA_DTYPES if nchannels == 1 else IDA_DTYPES_4C
@@ -197,11 +199,11 @@ def add_columns(table: TimeSeries, name: str, month: str) -> None:
     table[TS.MOON_PHASE] = observer.moon_phase(table['time']) / (np.pi * u.rad)
   
 
-def create_table(path: str) -> TimeSeries:
+def create_table(path: str, fix: bool) -> TimeSeries:
     '''Create TimeSeries or loads table from IDA file'''
     name , month = name_month(path)
     log.info("[%s] [%s] Creating a Time Series from IDA file: %s", name, month, path)
-    table = ida_to_table(path)
+    table = ida_to_table(path, fix)
     add_columns(table, name, month)
     return table
 
@@ -219,7 +221,7 @@ def save_table(table: TimeSeries, path: str) -> None:
 def append_table(acc: TimeSeries, table: TimeSeries) -> TimeSeries:
     return vstack([acc, table])
 
-def do_to_ecsv_single(in_path: str, out_path: str) -> None:
+def do_to_ecsv_single(in_path: str, out_path: str, fix: bool) -> None:
     name , month = name_month(in_path)
     data = [os.path.basename(in_path), hash_func(in_path)]
     result = adm_table_hashes_lookup(data[0])
@@ -227,7 +229,7 @@ def do_to_ecsv_single(in_path: str, out_path: str) -> None:
         _, stored_hash_str = result
         if data[1] != stored_hash_str or not os.path.isfile(out_path):
             adm_table_hashes_update(data)
-            table = create_table(in_path)
+            table = create_table(in_path, fix)
             save_table(table, out_path)
         else:
             log.info("[%s] [%s] Time Series already in ECSV file: %s", name, month, out_path)
@@ -240,16 +242,16 @@ def do_to_ecsv_single(in_path: str, out_path: str) -> None:
 # Generic API
 # ===========
 
-def to_ecsv_single(base_dir: OptStr, name: str,  month: OptDate, exact: OptStr, out_dir: str) -> None:
+def to_ecsv_single(base_dir: OptStr, name: str,  month: OptDate, exact: OptStr, out_dir: str, fix: bool) -> None:
     in_dir_path = to_phot_dir(base_dir, name)
     filename = name + '_' + month.strftime('%Y-%m') + '.dat' if not exact else exact
     in_path = os.path.join(in_dir_path, filename)
     out_dir_path = makedirs(out_dir, name)
     filename = os.path.splitext(filename)[0]
     out_path = os.path.join(out_dir_path, filename + '.ecsv')
-    do_to_ecsv_single(in_path, out_path)
+    do_to_ecsv_single(in_path, out_path, fix)
    
-def to_ecsv_range(base_dir: OptStr,  name: str, out_dir: str, since: datetime, until: datetime) -> None:
+def to_ecsv_range(base_dir: OptStr,  name: str, out_dir: str, since: datetime, until: datetime, fix: bool) -> None:
     in_dir_path = to_phot_dir(base_dir, name)
     months = [m for m in month_range(since, until)]
     search_path = os.path.join(in_dir_path, '*.dat')
@@ -262,7 +264,7 @@ def to_ecsv_range(base_dir: OptStr,  name: str, out_dir: str, since: datetime, u
         filename = os.path.splitext(os.path.basename(in_path))[0] + '.ecsv'
         dirname = makedirs(out_dir, name)
         out_path = os.path.join(dirname, filename)
-        do_to_ecsv_single(in_path, out_path)
+        do_to_ecsv_single(in_path, out_path, fix)
 
 
 def to_ecsv_combine(base_dir: OptStr,  name: str, since: datetime, until: datetime) -> None:
@@ -300,6 +302,7 @@ def cli_to_ecsv_single(args: Namespace) -> None:
         month = args.month,
         exact = args.exact,
         out_dir = args.out_dir,
+        fix = True if args.fix else False,
     )
 
 def cli_to_ecsv_range(args: Namespace) -> None:
@@ -309,6 +312,7 @@ def cli_to_ecsv_range(args: Namespace) -> None:
         out_dir = args.out_dir,
         since = args.since,
         until = args.until,
+        fix = True if args.fix else False,
     )
 
 def cli_to_ecsv_combine(args: Namespace) -> None:
