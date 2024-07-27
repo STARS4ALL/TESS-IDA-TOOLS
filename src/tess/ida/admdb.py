@@ -209,7 +209,7 @@ def cli_location(args: Namespace) -> None:
             if h is not None:
                 table['height'][r.index] = h *u.m
             log.info("[%s] Modified location entry", args.name)
-
+            log.warning("[%s] Sun/Moon data no longer valid. Delete your %s ECSV files and re-run the pipeline", name, name)
     table.write(locations_file, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
 
 def add_args(parser: ArgumentParser) -> ArgumentParser:
