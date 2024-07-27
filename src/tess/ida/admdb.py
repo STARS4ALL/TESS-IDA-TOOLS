@@ -53,7 +53,7 @@ log = logging.getLogger(__name__.split('.')[-1])
 
 try:
     theHashesTable = None
-    theHashesFile = decouple.config('ADM_HASHES_TABLE')
+    theHashesFile = decouple.config('HASHES_TABLE')
 
     from astropy.table import SortedArray, SCEngine
 
@@ -101,20 +101,20 @@ except decouple.UndefinedValueError:
   
 try:
     theLocationsTable = None
-    theLocationsFile = decouple.config('ADM_LOCATIONS_TABLE')
+    theLocationsFile = decouple.config('COORDS_TABLE')
 
-    def adm_table_locations_load() -> None:
+    def adm_table_coords_load() -> None:
         global theLocationsTable, theLocationsFile
         log.info("Loading administrative Table from %s", theLocationsFile)
         theLocationsTable = QTable.read(theLocationsFile, format='ascii.ecsv', delimiter=',')
         theLocationsTable.add_index('phot_name', unique=True)
 
-    def adm_table_locations_save() -> None:
+    def adm_table_coords_save() -> None:
         global theLocationsTable, theLocationsFile
         log.info("Saving administrative Table to %s", theLocationsFile)
         theLocationsTable.write(theLocationsFile, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
 
-    def adm_table_location_lookup(phot_name: str) -> OptRow:
+    def adm_table_coords_lookup(phot_name: str) -> OptRow:
         global theLocationsTable
         try:
             result = theLocationsTable.loc[phot_name]
@@ -123,20 +123,20 @@ try:
         return result
 
 except decouple.UndefinedValueError:
-    def adm_table_locations_load() -> None:
-        log.warning("No Adminsitrative table for photometers' locations")
-    def adm_table_locations_save() -> None:
-        log.warning("No Adminsitrative table for photometers' locations")
-    def adm_table_location_lookup(name) -> OptRow:
+    def adm_table_coords_load() -> None:
+        log.warning("No Adminsitrative table for photometers' coordinates")
+    def adm_table_coords_save() -> None:
+        log.warning("No Adminsitrative table for photometers' coordinates")
+    def adm_table_coords_lookup(name) -> OptRow:
         return None
 
 def adm_dbase_load():
     adm_table_hashes_load()
-    adm_table_locations_load()
+    adm_table_coords_load()
 
 def adm_dbase_save():
     adm_table_hashes_save()
-    adm_table_locations_save()
+    adm_table_coords_save()
 
 # ================================
 # COMMAND LINE INTERFACE FUNCTIONS
@@ -144,7 +144,7 @@ def adm_dbase_save():
 
 def cli_schema_create(args: Namespace) -> None:
     table_files = list()
-    for env_var in ('ADM_HASHES_TABLE', 'ADM_LOCATIONS_TABLE'):
+    for env_var in ('HASHES_TABLE', 'COORDS_TABLE'):
         try:
             table_file = decouple.config(env_var)
             table_files.append(table_file)
@@ -175,27 +175,27 @@ def cli_schema_create(args: Namespace) -> None:
         table.write(table_files[1], format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
 
 
-def cli_location_add(args: Namespace) -> None:
-    locations_file = decouple.config('ADM_LOCATIONS_TABLE')
-    log.info("Loading administrative Table from %s", locations_file)
-    table = QTable.read(locations_file, format='ascii.ecsv', delimiter=',')
+def cli_coords_add(args: Namespace) -> None:
+    coords_file = decouple.config('COORDS_TABLE')
+    log.info("Loading administrative Table from %s", coords_file)
+    table = QTable.read(coords_file, format='ascii.ecsv', delimiter=',')
     table.add_index('phot_name', unique=True)
     name = args.name
     lati = args.latitude*u.deg
     longi = args.longitude*u.deg
     h =  args.height*u.m
-    log.info("[%s] Adding location entry: Lat = %s, Long = %s, Height = %s", args.name, lati, longi, h)
+    log.info("[%s] Adding coordinates entry: Lat = %s, Long = %s, Height = %s", args.name, lati, longi, h)
     try:
         table.add_row((name, lati,longi,h))
     except ValueError:
-        log.error("[%s] location entry already exists. Try subcommand 'update' instead", name)
-    table.write(locations_file, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
+        log.error("[%s] Coordinates entry already exists. Try subcommand 'update' instead", name)
+    table.write(coords_file, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
 
 
-def cli_location_update(args: Namespace) -> None:
-    locations_file = decouple.config('ADM_LOCATIONS_TABLE')
-    log.info("Loading administrative Table from %s", locations_file)
-    table = QTable.read(locations_file, format='ascii.ecsv', delimiter=',')
+def cli_coords_update(args: Namespace) -> None:
+    coords_file = decouple.config('COORDS_TABLE')
+    log.info("Loading administrative Table from %s", coords_file)
+    table = QTable.read(coords_file, format='ascii.ecsv', delimiter=',')
     table.add_index('phot_name', unique=True)
     name = args.name
     lati = args.latitude
@@ -203,9 +203,9 @@ def cli_location_update(args: Namespace) -> None:
     h =  args.height
     try:
         res = table.loc[args.name]
-        log.info("[%s] Found location entry", args.name)
+        log.info("[%s] Found coordinates entry", args.name)
     except KeyError:
-        log.warning("[%s] Location entry not found deleted", args.name)
+        log.warning("[%s] Coordnates entry not found", args.name)
     else:
         if lati is not None:
             table['latitude'][res.index] = lati * u.deg
@@ -213,45 +213,45 @@ def cli_location_update(args: Namespace) -> None:
             table['longitude'][res.index] = longi * u.deg
         if h is not None:
             table['height'][res.index] = h * u.m
-        log.info("[%s] Modified location entry", args.name)
+        log.info("[%s] Modified coordinates entry", args.name)
         log.warning("[%s] Sun/Moon data no longer valid. Delete your %s ECSV files and re-run the pipeline", name, name)
-    table.write(locations_file, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
+    table.write(coords_file, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
 
 
-def cli_location_delete(args: Namespace) -> None:
-    locations_file = decouple.config('ADM_LOCATIONS_TABLE')
-    log.info("Loading administrative Table from %s", locations_file)
-    table = QTable.read(locations_file, format='ascii.ecsv', delimiter=',')
+def cli_coords_delete(args: Namespace) -> None:
+    coords_file = decouple.config('COORDS_TABLE')
+    log.info("Loading administrative Table from %s", coords_file)
+    table = QTable.read(coords_file, format='ascii.ecsv', delimiter=',')
     table.add_index('phot_name', unique=True)
     try:
         res = table.loc[args.name]
-        log.info("[%s] Found location entry %s", args.name)
+        log.info("[%s] Found coordinates entry %s", args.name)
     except KeyError:
-        log.warning("[%s] Location entry not found", args.name)
+        log.warning("[%s] Coordinates entry not found", args.name)
     else:
         table.remove_rows(res.index)
-        log.info("[%s] Deleted location entry", args.name)
-    table.write(locations_file, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
+        log.info("[%s] Deleted coordinates entry", args.name)
+    table.write(coords_file, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
 
 
 def add_args(parser: ArgumentParser) -> ArgumentParser:
     # Now parse the application specific parts
     subparser = parser.add_subparsers(dest='command')
     parser_schema = subparser.add_parser('schema', help='Administrative AstroPy Tables schema')
-    parser_location = subparser.add_parser('location', help='Location Table management')
+    parser_coords = subparser.add_parser('coords', help='Coordinates Table management')
 
     subparser = parser_schema.add_subparsers(dest='subcommand')
     sch_cre = subparser.add_parser('create',  help="Create AstroPy tables and serialize to ECSV files")
 
-    subparser = parser_location.add_subparsers(dest='subcommand')
-    loc_add = subparser.add_parser('add',  help="Add a location for photometer")
+    subparser = parser_coords.add_subparsers(dest='subcommand')
+    loc_add = subparser.add_parser('add',  help="Add coordinates to a photometer")
     loc_add.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
     loc_add.add_argument('-la', '--latitude', type=float, required=True, help='Latitude [degrees]')
     loc_add.add_argument('-lo', '--longitude', type=float, required=True, help='Longitude [degrees]')
     loc_add.add_argument('-he', '--height', type=float, default=0.0, help='Height above sea level [m] (default: %(default)s)')
-    loc_del= subparser.add_parser('delete',  help="Remove location for photometer")
+    loc_del= subparser.add_parser('delete',  help="Remove coordinates from photometer")
     loc_del.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
-    loc_upd= subparser.add_parser('update',  help="Update location for photometer")
+    loc_upd= subparser.add_parser('update',  help="Update coordinates to photometer")
     loc_upd.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
     loc_upd.add_argument('-la', '--latitude', type=float, default=None, help='Latitude [degrees]')
     loc_upd.add_argument('-lo', '--longitude', type=float, default=None, help='Longitude [degrees]')
@@ -261,9 +261,9 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
 
 CMD_TABLE = {
     'schema_create': cli_schema_create,
-    'location_add': cli_location_add,
-    'location_delete': cli_location_delete,
-    'location_update': cli_location_update,
+    'coords_add': cli_coords_add,
+    'coords_delete': cli_coords_delete,
+    'coords_update': cli_coords_update,
 }
 
 def cli_schema(args: Namespace) -> None:

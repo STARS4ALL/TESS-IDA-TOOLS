@@ -40,7 +40,7 @@ from lica.typing import OptStr
 
 from .. import __version__
 from .admdb import adm_dbase_load, adm_dbase_save
-from .admdb import adm_table_hashes_lookup, adm_table_hashes_insert, adm_table_hashes_update
+from .admdb import adm_table_hashes_lookup, adm_table_hashes_insert, adm_table_hashes_update, adm_table_coords_lookup
 
 from .constants import TEW, T4C, IKW, TS, IDA_HEADER_LEN
 from .utils import cur_month, prev_month, to_phot_dir, makedirs, v_or_n, month_range, name_month, hash_func
@@ -75,6 +75,13 @@ IDA_EXCLUDE = (TEW.LOCAL_TIME,)
 # get the module logger
 log = logging.getLogger(__name__.split('.')[-1])
 
+# -----------------
+# Custom Exceptions
+# -----------------
+
+class NoCoordinatesError(Exception):
+    pass
+
 # -------------------
 # Auxiliary functions
 # -------------------
@@ -85,8 +92,9 @@ log = logging.getLogger(__name__.split('.')[-1])
 # =============
 
 
-def ida_metadata(path):
+def ida_metadata(path, fix=False):
     # Reads the whole header, strips off the starting '# ' and trailing '\n'
+    name, month = name_month(path)
     with open(path) as f:
         lines = [next(f)[2:-1] for _ in range(IDA_HEADER_LEN)]
     lines = lines[:-13] # Strips off the last 13 lines (including comments)
@@ -109,11 +117,14 @@ def ida_metadata(path):
         header[IKW.POSITION] = {'latitude': float(v_or_n(latitude)), 
             'longitude': float(v_or_n(longitude)), 'height': float(v_or_n(height))}
     except TypeError:
-        name, month = name_month(path)
-        log.error("[%s] [%s] Unknown Observer coordinates. Add location to adm database locations table & Re-run with --fix", name, month)
-        log.warning("[%s] [%s] Add a location to adm database locations table & Re-run with --fix", name, month)
-        raise KeyboardInterrupt
-
+        if not fix:
+            log.error("[%s] [%s] Unknown Observer coordinates", name, month)
+            log.warning("[%s] [%s] Add a location to adm database locations table & Re-run with --fix", name, month)
+            raise NoCoordinatesError
+        coords = adm_table_coords_lookup(name)
+        if not coords:
+            log.error("[%s] [%s] Could not find alternative coordinates", name, month)
+            raise NoCoordinatesError
     header[IKW.FOV] = float(header[IKW.FOV])
     header[IKW.COVER_OFFSET] = float(header[IKW.COVER_OFFSET])
     header[IKW.NUM_COLS] = int(header[IKW.NUM_COLS])
@@ -343,9 +354,12 @@ def cli_to_ecsv(args: Namespace) -> None:
     '''The main entry point specified by pyprojectable.toml'''
     func = CMD_TABLE[args.command]
     adm_dbase_load()
-    func(args)
-    log.info("done!")
+    try:
+        func(args)
+    except NoCoordinatesError:
+        pass
     adm_dbase_save()
+    log.info("done!")
 
 def main() -> None:
     execute(main_func=cli_to_ecsv, 
