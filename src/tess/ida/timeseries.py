@@ -105,7 +105,15 @@ def ida_metadata(path):
     header[IKW.LOCATION] = {'place': v_or_n(place), 'town': v_or_n(town), 
      'sub_region': v_or_n(sub_region), 'region': v_or_n(region), 'country': v_or_n(country)}
     latitude, longitude, height = header[IKW.POSITION].split(',')
-    header[IKW.POSITION] = {'latitude': float(latitude), 'longitude': float(longitude), 'height': float(height)}
+    try:
+        header[IKW.POSITION] = {'latitude': float(v_or_n(latitude)), 
+            'longitude': float(v_or_n(longitude)), 'height': float(v_or_n(height))}
+    except TypeError:
+        name, month = name_month(path)
+        log.error("[%s] [%s] Unknown Observer coordinates. Add location to adm database locations table & Re-run with --fix", name, month)
+        log.warning("[%s] [%s] Add a location to adm database locations table & Re-run with --fix", name, month)
+        raise KeyboardInterrupt
+
     header[IKW.FOV] = float(header[IKW.FOV])
     header[IKW.COVER_OFFSET] = float(header[IKW.COVER_OFFSET])
     header[IKW.NUM_COLS] = int(header[IKW.NUM_COLS])
