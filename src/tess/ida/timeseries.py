@@ -41,7 +41,7 @@ from lica.typing import OptStr
 # -------------
 
 from .. import __version__
-from .database import adm_table_lookup
+from .admdb import adm_table_hashes_lookup
 from .constants import TEW, T4C, IKW, TS, IDA_HEADER_LEN
 from .utils import cur_month, prev_month, to_phot_dir, makedirs, v_or_n, month_range, name_month, hash_func
 
@@ -201,17 +201,17 @@ def append_table(acc: TimeSeries, table: TimeSeries) -> TimeSeries:
 def do_to_ecsv_single(in_path: str, out_path: str) -> None:
     name , month = name_month(in_path)
     data = [os.path.basename(in_path), hash_func(in_path)]
-    result = adm_table_lookup(data[0])
+    result = adm_table_hashes_lookup(data[0])
     if result:
         _, stored_hash_str = result
         if data[1] != stored_hash_str or not os.path.isfile(out_path):
-            pub.sendMessage('update_database', data=data)
+            pub.sendMessage('admdb_update_hashes', data=data)
             table = create_table(in_path)
             save_table(table, out_path)
         else:
             log.info("[%s] [%s] Time Series already in ECSV file: %s", name, month, out_path)
     else:
-        pub.sendMessage('insert_database', data=data)
+        pub.sendMessage('admdb_insert_hashes', data=data)
         table = create_table(in_path)
         save_table(table, out_path)
    
@@ -306,6 +306,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
     parser_single.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
     parser_single.add_argument('-i', '--in-dir', type=vdir, default=None, help='Input IDA base directory')
     parser_single.add_argument('-o', '--out-dir', type=str, default=None, help='Output ECSV base directory')
+    parser_single.add_argument('-f', '--fix', action='store-true', help='Fix unknown location')
     group1 = parser_single.add_mutually_exclusive_group(required=True)
     group1.add_argument('-e', '--exact', type=str, default=None, help='Specific monthly file name')
     group1.add_argument('-m', '--month',  type=vmonth, default=None, metavar='<YYYY-MM>', help='Year and Month')
@@ -315,6 +316,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
     parser_range.add_argument('-o', '--out-dir', type=str, default=None, help='Output ECSV base directory')
     parser_range.add_argument('-s', '--since',  type=vmonth, default=prev_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
     parser_range.add_argument('-u', '--until',  type=vmonth, default=cur_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
+    parser_range.add_argument('-f', '--fix', action='store-true', help='Fix unknown location')
     parser_comb = subparser.add_parser('combine', help='Combines a range of monthly ECSV files into a simnle ECSV')
     parser_comb.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
     parser_comb.add_argument('-i', '--in-dir', type=vdir, default=None, help='Input ECSV base directory')
@@ -332,10 +334,10 @@ CMD_TABLE = {
 def cli_to_ecsv(args: Namespace) -> None:
     '''The main entry point specified by pyprojectable.toml'''
     func = CMD_TABLE[args.command]
-    pub.sendMessage('load_database')
+    pub.sendMessage('admdb_load')
     func(args)
     log.info("done!")
-    pub.sendMessage('save_database')
+    pub.sendMessage('admdb_save')
 
 
 def main() -> None:

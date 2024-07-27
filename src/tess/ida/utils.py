@@ -57,8 +57,7 @@ def to_phot_dir(base_dir: str | None, name: str) -> str:
 
 def makedirs(base_dir: str | None, name: str) -> str:
     full_dir_path = to_phot_dir(base_dir, name)
-    if not os.path.isdir(full_dir_path):
-        os.makedirs(full_dir_path)
+    os.makedirs(full_dir_path, exist_ok=True)
     return full_dir_path
 
 def v_or_n(value: str) -> str | None:
