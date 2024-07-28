@@ -2,6 +2,14 @@
 
 Collection of utilities to download and analyze TESS Photometer Network data from IDA files.
 
-This file is an index to the several utilities:
+If all that you need is simply to download IDA monthly files from our NextCloud Server, the
+simple [get-tess-ida.py](doc/get-tess-ida.md) script is all that you need. Read no further.
 
-* [get-tess-ida](doc/get-tess-ida.md). Get TESS-W IDA monthly files from NextCloud server.
+# Summary
+* [Installation](doc/install.md).
+* [Configuration](doc/configure.md).
+* [Download IDA files](doc/download.md)
+* [Transform an IDA monthly file to an ECSV file](doc/transform.md)
+* [Merge a range of ECSV files](doc/transform.md)
+* [The administrative database](doc/administrative.md)
+* [Analisys example](doc/example.md)
