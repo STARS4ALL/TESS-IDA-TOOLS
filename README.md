@@ -4,4 +4,4 @@ Collection of utilities to download and analyze TESS Photometer Network data fro
 
 This file is an index to the several utilities:
 
-* [get-tess-ida](get-tess-ida.md). Get TESS-W IDA monthly files from NextCloud server.
+* [get-tess-ida](doc/get-tess-ida.md). Get TESS-W IDA monthly files from NextCloud server.
