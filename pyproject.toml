@@ -68,5 +68,8 @@ write_to = "src/tess/_version.py"
 namespaces = true
 where = ["src"]
 
+[tool.setuptools.package-data]
+"tess.ida.dbase.sql" = ["*.sql",]
+
 [tool.setuptools]
 script-files = []
