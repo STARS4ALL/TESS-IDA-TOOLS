@@ -1,11 +1,9 @@
-# get-tess-ida
-Get TESS-W IDA monthly files from NextCloud server
+# get-tess-ida.py
+Script to download TESS-W IDA monthly files from NextCloud server.
 
 # Instalation and dependencies
 
-There are two versions of this tool, the simples one is a self contained script called ***get-tess-ida.py***) which just downloads the data files.
-The other one is a full package, bundled other analysis tools (*being developed at the moment*).
-For both versions, it is ***highly recommended*** to create a virtual environment and activate is:
+It is ***highly recommended*** to create a virtual environment and activate it:
 
 ```bash
 python3 -m venv .venv
@@ -16,34 +14,17 @@ source .venv/bin/activate
 
 1. Download the [get-tess-ida.py script](https://raw.githubusercontent.com/STARS4ALL/TESS-IDA-TOOLS/main/get-tess-ida.py) from the GitHub repository:
 
-3. Install the following packages in the virtual environment previously created:
+2. Install the following packages in the virtual environment previously created:
 
 ```bash
 pip install python-decouple python-dateutil requests
 ```
 
-## Package installation
+## Additional configuartion 
 
-1. Download the full package from GitHub.
-There are several ways to do it, either cloning the github repo for the latest development evrsions or use a previous packaged version
+1. Make an enviroment file called `.env` (Mac/Linux) or settings.ini (Windows) containing enviromental variables.
 
-
-```bash
-git clone https://github.com/STARS4ALL/TESS-IDA-TOOLS.git
-```
-
-2. Install the package in the virtual envirnment previously created:
-
-
-```bash
-pip install .
-```
-
-## Additional configuartion for both versions 
-
-1. Make an env file caled `.env` (Mac/Linux) or settings.ini (Windows) containing an enviromental variable
-
-.env file:
+The contents of this `.env` file should be:
 
 ```bash
 IDA_URL=<NextCloud Server URL>
@@ -100,17 +81,17 @@ options:
 ```
 ## Examples
 
-1. Download single month for a given photometer
+### Download single month for a given photometer
 ```bash
 python get-tess-ida.py --console single --month 2023-4 --name stars1 
 ```
 
-2. Download an ***specific file*** for a given photometer
+### Download an ***specific file*** for a given photometer
 ```bash
 python get-tess-ida.py --console single --exact stars4_2016-09_2.dat --name stars4 
 ```
 
-3. Download monthly files since a given month until another
+### Download monthly files since a given month until another
 
 If no `--since` parameter is given, defaults to last month.
 
@@ -120,7 +101,7 @@ If no `--until` parameter is given, defaults to current month.
 python get-tess-ida.py --console range --since 2023-3 --until 2023-6 --name stars1 
 ```
 
-4. Download a range of monthly files for a selected set of photometers
+### Download a range of monthly files for a selected set of photometers
 
 If no `--since` parameter is given, defaults to last month.
 
@@ -128,14 +109,14 @@ If no `--until` parameter is given, defaults to current month.
 
 Instead of names, we pass just photometer numbers. 
 
-The script below will download data from photometers `stars1` up to `stars5` since month `2023-06` until current month
+The script below will download data from photometers `stars1` up to `stars5` since month `2023-06` until current month:
 
 ```bash
 python get-tess-ida.py --console photometers --range 1 5 --since 2023-06
 ```
 
 The script below will download data from selected photometers `stars1` , `stars243`, `stars703` 
-since last month until current month
+since last month until current month:
 
 ```bash
 python get-tess-ida.py --console photometers --list 1 245 703
