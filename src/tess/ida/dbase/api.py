@@ -10,7 +10,7 @@
 
 import os
 import logging
-import sqlite
+import sqlite3
 
 from typing import Any, Union
 from argparse import Namespace, ArgumentParser
@@ -23,8 +23,6 @@ from collections.abc import Sequence
 
 import decouple
 
-from lica.cli import execute
-from lica.validators import vfile, vdir, vmonth
 from lica.typing import OptStr
 
 
@@ -58,7 +56,7 @@ try:
         log.info("Opening administrative database from %s", theDatabaseFile)
         theConnection = sqlite3.connect(theDatabaseFile)
       
-    def adm_table_save():
+    def adm_dbase_save():
         global theConnection, theDatabaseFile
         log.info("Commiting changes to administrative database %s", theDatabaseFile)
         theConnection.commit()
@@ -66,30 +64,28 @@ try:
 
     def adm_table_hashes_insert(data: Sequence[str, str]) -> None:
         global theConnection
-        cursor = theConnection.cursor()
-        cursor.execute('INSERT INTO ecsv_t(filename, hash) VALUES(?,?)', params=data)
+        theConnection.execute('INSERT INTO ecsv_t(filename, hash) VALUES(?,?)', data)
 
     def adm_table_hashes_update(data: Sequence[str, str]) -> None:
         global theConnection
-        cursor = theConnection.cursor()
-        cursor.execute('UPDATE ecsv_t SET hash = ? WHERE filename = ?', params=(data[1], data[0]))
+        theConnection.execute('UPDATE ecsv_t SET hash = ? WHERE filename = ?', (data[1], data[0]))
 
     def adm_table_hashes_lookup(filename: str) -> OptRow:
         global theConnection
         cursor = theConnection.cursor()
-        cursor.execute('SELECT filename, hash FROM ecsv_t WHERE filename = ?', params=(data[0],))
+        cursor.execute('SELECT filename, hash FROM ecsv_t WHERE filename = ?', (filename,))
         return cursor.fetchone()
 
     def adm_table_coords_lookup(name: str) -> OptRow:
         global theConnection
         cursor = theConnection.cursor()
-        cursor.execute('SELECT name, latitude, longitude, elevation FROM coords_t WHERE name = ?', params=(data[0],))
+        cursor.execute('SELECT phot_name, latitude, longitude, elevation FROM coords_t WHERE name = ?', (name,))
         return cursor.fetchone()
 
 except decouple.UndefinedValueError:
-    def adm_table_load() -> None:
+    def adm_dbase_load() -> None:
         log.warning("No Adminsitrative database was configured")
-    def adm_table_save() -> None:
+    def adm_dbase_load() -> None:
         log.warning("No Adminsitrative database was configured")
     def adm_table_hashes_lookup(filename: str) -> OptRow:
         return None

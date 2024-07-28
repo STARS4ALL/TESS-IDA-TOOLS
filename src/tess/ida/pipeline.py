@@ -31,7 +31,8 @@ from lica.typing import OptStr
 # -------------
 
 from .. import __version__
-from .admdb import adm_dbase_load, adm_dbase_save
+#from .admdb import adm_dbase_load, adm_dbase_save
+from .dbase import adm_dbase_load, adm_dbase_save
 from .utils import cur_month, prev_month, group, month_range, makedirs
 from .download import ida_single, ida_range
 from .timeseries import to_ecsv_single, to_ecsv_range, to_ecsv_combine, NoCoordinatesError

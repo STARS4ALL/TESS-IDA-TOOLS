@@ -39,8 +39,10 @@ from lica.typing import OptStr
 # -------------
 
 from .. import __version__
-from .admdb import adm_dbase_load, adm_dbase_save
-from .admdb import adm_table_hashes_lookup, adm_table_hashes_insert, adm_table_hashes_update, adm_table_coords_lookup
+#from .admdb import adm_dbase_load, adm_dbase_save
+#from .admdb import adm_table_hashes_lookup, adm_table_hashes_insert, adm_table_hashes_update, adm_table_coords_lookup
+from .dbase import adm_dbase_load, adm_dbase_save
+from .dbase import adm_table_hashes_lookup, adm_table_hashes_insert, adm_table_hashes_update, adm_table_coords_lookup
 
 from .constants import TESSW_COLS as TEW, TESS4C_COLS as T4C, TIMESERIES_COLS as TS, IDA_KEYWORDS as IKW,  IDA_HEADER_LEN
 from .utils import cur_month, prev_month, to_phot_dir, makedirs, v_or_n, month_range, name_month, hash_func
