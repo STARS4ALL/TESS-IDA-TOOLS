@@ -165,7 +165,7 @@ cython_debug/
 # Own stuff
 # =========
 src/tess/_version.py
-stars*/
 *.ecsv
+*.dat
 NOTES
 
