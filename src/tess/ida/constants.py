@@ -21,7 +21,7 @@ IDA_HEADER_LEN = 35
 
 
 # IDA keywords in the comments section of the IDA file
-class IKW(StrEnum):
+class IDA_KEYWORDS(StrEnum):
     LICENSE      = 'License'
     NUM_HEADERS  = 'Number of header lines'
     NUM_CHANNELS = 'Number of channels'
@@ -46,7 +46,7 @@ class BaseEnum(StrEnum):
 
 # TESS-W Data column names
 # order is imporant: it is the oroder in the IDA file
-class TEW(BaseEnum):
+class TESSW_COLS(BaseEnum):
     UTC_TIME   = 'time' # always 'time' for TimeSeries Astropy Class
     LOCAL_TIME = 'Local Date & Time'
     BOX_TEMP   = 'Enclosure Temperature'
@@ -58,7 +58,7 @@ class TEW(BaseEnum):
 
 # TESS-4C data column names
 # order is imporant: it is the order in the IDA file
-class T4C(BaseEnum):
+class TESS4C_COLS(BaseEnum):
     UTC_TIME   = 'time' # always 'time' for TimeSeries Astropy Class
     LOCAL_TIME = 'Local Date & Time'
     BOX_TEMP   = 'Enclosure Temperature'
@@ -78,7 +78,7 @@ class T4C(BaseEnum):
     SEQ_NUM    = 'Sequence Number'
 
 # Additional data column names for the Time Series
-class TS(StrEnum):
+class TIMESERIES_COLS(StrEnum):
     SUN_ALT    = 'Sun Alt'
     MOON_ALT   = 'Moon Alt'
     MOON_PHASE = 'Moon Phase'
