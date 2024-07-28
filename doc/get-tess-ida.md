@@ -86,7 +86,7 @@ options:
 python get-tess-ida.py --console single --month 2023-4 --name stars1 
 ```
 
-### Download an ***specific file*** for a given photometer
+### Download an specific file for a given photometer
 ```bash
 python get-tess-ida.py --console single --exact stars4_2016-09_2.dat --name stars4 
 ```
@@ -107,13 +107,18 @@ If no `--since` parameter is given, defaults to last month.
 
 If no `--until` parameter is given, defaults to current month.
 
+***Photometers range***
+
 Instead of names, we pass just photometer numbers. 
+
 
 The script below will download data from photometers `stars1` up to `stars5` since month `2023-06` until current month:
 
 ```bash
 python get-tess-ida.py --console photometers --range 1 5 --since 2023-06
 ```
+
+***Selected photometers***
 
 The script below will download data from selected photometers `stars1` , `stars243`, `stars703` 
 since last month until current month:
