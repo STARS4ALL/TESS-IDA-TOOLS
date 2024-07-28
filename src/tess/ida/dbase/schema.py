@@ -9,8 +9,9 @@
 # ----------------------
 
 import os
+import sys
 import logging
-import sqlite
+import sqlite3
 
 from typing import Any, Union
 from argparse import Namespace, ArgumentParser
@@ -26,7 +27,6 @@ import decouple
 
 from lica.cli import execute
 from lica.validators import vfile, vdir, vmonth
-from lica.sqlite import open_database
 
 
 #--------------
@@ -34,6 +34,19 @@ from lica.sqlite import open_database
 # -------------
 
 from ... import __version__
+
+_SQL_PKG = 'tess.ida.dbase.sql'
+_SQL_RES = 'schema.sql'
+
+
+# Instead of a long, embeddded string, we read it as a Python resource
+if sys.version_info[1] < 11:
+    from pkg_resources import resource_string as resource_bytes
+    SCHEMA_SQL_TEXT = resource_bytes(_SQL_PKG, _SQL_RES).decode('utf-8')
+else:
+    from importlib_resources import files
+    SCHEMA_SQL_TEXT = files(_SQL_PKG).joinpath(_SQL_RES).read_text()
+
 
 # ----------------
 # Module constants
@@ -45,132 +58,96 @@ DESCRIPTION = "Database utility to speed up pipeline processing"
 log = logging.getLogger(__name__.split('.')[-1])
 
 
-def execute_script(dbase_path, sql_path_obj):
-    log.info("Applying updates to data model from {path}", path=sql_path_obj)
+def create_schema(dbase_path: str, sql_text: str) -> None:
+    log.info("Creating SQLite Schema on %s", dbase_path)
+    base_path = decouple.config('DATABASE_FILE')
     try:
         connection = sqlite3.connect(dbase_path)
-        connection.executescript(sql_path_obj.read_text())
+        connection.executescript(sql_text)
     except sqlite3.OperationalError as e:
-        connection.close()
-        log.error("Error using the Python API. Trying with sqlite3 CLI")
-        sqlite_cli = shutil.which("sqlite3");
-        output = subprocess.check_call([sqlite_cli, dbase_path, "-init", sql_path_obj])
-    else:
+        log.error("Error using the Python API")
+        log.error(e)
+    finally:
         connection.close()
       
 
-
-def create_database_file() -> bool:
+def create_database_file(dbase_path: str) -> None:
     '''Creates a Database file if not exists and returns a connection'''
-    dbase_path = decouple.config('COORDS_TABLE')
-    new_database = False
+    dbase_path = decouple.config('DATABASE_FILE')
     output_dir = os.path.dirname(dbase_path)
     output_dir = os.getcwd() if not output_dir else output_dir
     os.makedirs(output_dir, exist_ok=True)
     if not os.path.exists(dbase_path):
         with open(dbase_path, 'w') as f:
             pass
-        new_database = True
-    sqlite3.connect(dbase_path).close()
-    return new_database
+    sqlite3.connect(dbase_path).close() # Creates an empty SQLite database
 
-
-
-def create_schema(dbase_path, schema_resource, initial_data_dir_path, updates_data_dir, query=VERSION_QUERY):
-    f = files('tess.ida.dbase.sql').joinpath('schema.sql')
-    with f.open('r') as sqlfile:
-        lines = sqlfile.readlines()
-
-    created = True
-    connection = sqlite3.connect(dbase_path)
-    cursor = connection.cursor()
-    try:
-        cursor.execute(query)
-    except Exception:
-        created = False
-    if not created:
-        connection.executescript(schema_resource.read_text())
-        log.debug("Created data model from {url}", url=os.path.basename(schema_resource))
-        # the filtering part is because Python 3.9 resource folders cannot exists without __init__.py
-        file_list = [sql_file for sql_file in initial_data_dir_path.iterdir() if not sql_file.name.startswith('__') and not sql_file.is_dir()]
-        for sql_file in file_list:
-            log.debug("Populating data model from {path}", path=os.path.basename(sql_file))
-            connection.executescript(sql_file.read_text())
-    elif updates_data_dir is not None:
-        filter_func = _filter_factory(connection)
-        # the filtering part is beacuse Python 3.9 resource folders cannot exists without __init__.py
-        file_list = sorted([sql_file for sql_file in updates_data_dir.iterdir() if not sql_file.name.startswith('__') and not sql_file.is_dir()])
-        file_list = list(filter(filter_func, file_list))
-        connection.close()
-        for sql_file in file_list:
-            _execute_script(dbase_path, sql_file)
-    else:
-        file_list = list()
-    return not created, file_list
 
 # ================================
 # COMMAND LINE INTERFACE FUNCTIONS
 # ================================
 
 
-
-
-
 def cli_schema_create(args: Namespace) -> None:
-    connection, path = open_database(env_var='DATABASE_FILE')
-
+    dbase_path = decouple.config('DATABASE_FILE')
+    if os.path.isfile(dbase_path):
+        log.info("Deleting administrative database: %s", dbase_path)
+        os.remove(dbase_path)
+    create_database_file(dbase_path)
+    create_schema(dbase_path, SCHEMA_SQL_TEXT)
 
 
 def cli_coords_add(args: Namespace) -> None:
-    coords_file = decouple.config('COORDS_TABLE')
-    log.info("Loading administrative Table from %s", coords_file)
-    table = Table.read(coords_file, format='ascii.ecsv', delimiter=',')
-    table.add_index('phot_name', unique=True)
-    log.info("[%s] Adding coordinates entry: Lat = %s, Long = %s, Height = %s", 
-        args.name, args.latitude, args.longitude, args.height)
+    data = (args.name, args.latitude, args.longitude, args.height)
+    dbase_path = decouple.config('DATABASE_FILE')
     try:
-        table.add_row((args.name, args.latitude,args.longitude,args.height))
-    except ValueError:
-        log.error("[%s] Coordinates entry already exists. Try subcommand 'update' instead", args.name)
-    table.write(coords_file, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
-
+        with sqlite3.connect(dbase_path) as connection:
+            connection.execute('INSERT OR IGNORE INTO coords_t(phot_name, latitude, longitude, height) VALUES(?,?,?,?)', data)
+    except Exception as e:
+        log.error(e)
+    connection.close()
+    log.info("[%s] Added coordinates entry: Lat = %s, Long = %s, Height = %s", 
+        args.name, args.latitude, args.longitude, args.height)
+    
 
 def cli_coords_update(args: Namespace) -> None:
-    coords_file = decouple.config('COORDS_TABLE')
-    log.info("Loading administrative Table from %s", coords_file)
-    table = Table.read(coords_file, format='ascii.ecsv', delimiter=',')
-    table.add_index('phot_name', unique=True)
+    dbase_path = decouple.config('DATABASE_FILE')
+    setters = list()
+    data = {'name': args.name}
+    if args.latitude is not None:
+        setters.append('latitude = :latitude')
+        data['latitude'] = args.latitude
+    if args.longitude is not None:
+        setters.append('longitude = :longitude')
+        data['longitude'] = args.longitude
+    if args.height is not None:
+        setters.append('height = :height')
+        data['height'] = args.height
+    if not setters:
+        log.error("at least one argument must be given")
+        return
+    sql = 'UPDATE coords_t SET ' + ', '.join(setters) + ' WHERE phot_name = :name'
     try:
-        res = table.loc[args.name]
-        log.info("[%s] Found coordinates entry", args.name)
-    except KeyError:
-        log.warning("[%s] Coordnates entry not found", args.name)
-    else:
-        if args.latitude is not None:
-            table['latitude'][res.index] = args.latitude
-        if args.longitude is not None:
-            table['longitude'][res.index] = args.longitude
-        if args.height is not None:
-            table['height'][res.index] = args.height
-        log.info("[%s] Modified coordinates entry", args.name)
-        log.warning("[%s] Sun/Moon data no longer valid. Delete your %s ECSV files and re-run the pipeline", args.name, args.name)
-    table.write(coords_file, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
+        with sqlite3.connect(dbase_path) as connection:
+            connection.execute(sql, data)
+    except Exception as e:
+        log.error(e)
+    connection.close()        
+    log.info("[%s] Modified coordinates entry", args.name)
+    log.warning("[%s] Sun/Moon data no longer valid. Delete your %s ECSV files and re-run the pipeline", args.name, args.name)
+    
 
 
 def cli_coords_delete(args: Namespace) -> None:
-    coords_file = decouple.config('COORDS_TABLE')
-    log.info("Loading administrative Table from %s", coords_file)
-    table = Table.read(coords_file, format='ascii.ecsv', delimiter=',')
-    table.add_index('phot_name', unique=True)
+    dbase_path = decouple.config('DATABASE_FILE')
+    data = (args.name,)
     try:
-        res = table.loc[args.name]
-        log.info("[%s] Found coordinates entry %s", args.name)
-    except KeyError:
-        log.warning("[%s] Coordinates entry not found", args.name)
-    else:
-        table.remove_rows(res.index)
-        log.info("[%s] Deleted coordinates entry", args.name)
-    table.write(coords_file, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
+        with sqlite3.connect(dbase_path) as connection:
+            connection.execute('DELETE FROM coords_t WHERE phot_name = ?', data)
+    except Exception as e:
+        log.error(e)   
+    connection.close()
+    log.info("[%s] Deleted coordinates entry", args.name)
 
 
 def add_args(parser: ArgumentParser) -> ArgumentParser:
