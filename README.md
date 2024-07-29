@@ -6,10 +6,7 @@ Collection of utilities to download and analyze TESS Photometer Network data fro
 simple [get-tess-ida.py](doc/get-tess-ida.md) script is all that you need. Read no further.*
 
 # Summary
-* [Installation](doc/install.md).
-* [Configuration](doc/configure.md).
-* [Download IDA files](doc/download.md)
-* [Transform an IDA monthly file to an ECSV file](doc/transform.md)
-* [Merge a range of ECSV files](doc/transform.md)
+* [Installation and configuration](doc/install.md).
+* [Usage example](doc/example.md)
+* [The IDA monthly files])(doc/IDA.md)
 * [The auxiliar database](doc/auxiliar.md)
-* [Analisys example](doc/example.md)

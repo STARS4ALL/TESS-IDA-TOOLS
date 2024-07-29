@@ -15,7 +15,7 @@ import itertools
 
 from datetime import datetime
 from argparse import Namespace, ArgumentParser
-from typing import Union
+from typing import Union, Dict, Any
 from collections.abc import Sequence
 
 # -------------------
@@ -92,7 +92,7 @@ class NoCoordinatesError(Exception):
 # =============
 
 
-def ida_metadata(path, fix):
+def ida_metadata(path: str, fix: bool) -> Dict[str, Any]:
     # Reads the whole header, strips off the starting '# ' and trailing '\n'
     name, month = name_month(path)
     with open(path) as f:
