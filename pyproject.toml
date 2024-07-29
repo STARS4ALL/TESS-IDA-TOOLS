@@ -50,7 +50,6 @@ Homepage = "https://github.com/STARS4ALL/TESS-IDA-TOOLS"
 Repository = "https://github.com/STARS4ALL/TESS-IDA-TOOLS.git"
 
 [project.scripts]
-
 tess-ida-get = "tess.ida.download:main"
 tess-ida-ecsv = "tess.ida.timeseries:main"
 tess-ida-pipe = "tess.ida.pipeline:main"
