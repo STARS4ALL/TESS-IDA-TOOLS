@@ -1,4 +1,4 @@
-# The Basics
+# Astropy ECSV Files processing Tutorial
 
 In this example, we are going to process ECSV monthly files from stas289 TESS-W photometer.
 Some examples of basic AstroPy tables usage is shown below.
@@ -8,14 +8,19 @@ But first, we need to import several packages and objects.
 
 ```python
 import os
+
+import numpy as np
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import astropy.units as u
-
 from astropy.timeseries import TimeSeries
-from tess.ida.constants import TESSW_COLS as TW, TIMESERIES_COLS as TS, IDA_KEYWORDS as IKW
 
-FILE_TO_PROCESS = os.path.join('ECSV', 'stars289', 'since_2019-05_until_2023-06.ecsv')
+# These come ftrom our TESS-IDA-TOOLS package
+from tess.ida.constants import StringEnum, TESSW_COLS as TW, TIMESERIES_COLS as TS, IDA_KEYWORDS as IKW
+
+# FILE_TO_PROCESS = os.path.join('ECSV', 'stars289', 'since_2019-05_until_2023-06.ecsv')
+FILE_TO_PROCESS = os.path.join('ECSV', 'stars289', 'stars289_2022-03.ecsv')
 ```
 
 
@@ -23,7 +28,7 @@ FILE_TO_PROCESS = os.path.join('ECSV', 'stars289', 'since_2019-05_until_2023-06.
 print(FILE_TO_PROCESS)
 ```
 
-    ECSV/stars289/since_2019-05_until_2023-06.ecsv
+    ECSV/stars289/stars289_2022-03.ecsv
 
 
 We load this file as a TimeSeries AstroPy Table. TimeSeries tables have a special first column named `time` and also have additional methods for processing. See the [AstroPy documentation](https://docs.astropy.org/en/stable/timeseries/index.html) for more details.
@@ -45,7 +50,7 @@ table.info
 
 
 
-    <TimeSeries length=18250>
+    <TimeSeries length=23807>
              name          dtype    unit    class  
     --------------------- ------- ------- ---------
                      time  object              Time
@@ -61,40 +66,110 @@ table.info
 
 
 
+## TimeSeries Table columns
+
 The first column is always the `time` column and this is imposed by AstroPy.
 
-Note that many of the columns have units attached to them. Many of them have long names and are difficult to remember. The TESS-IDA-TOOLS package has defined them as constants. Notice the `from tess.ida.constants import TESSW_COLS as TW, TIMESERIES_COLS as TS, IDA_KEYWORDS as IKW` import above.
+In the table info displayed above, you can see the actual column names. Note that many of these columns have units attached to them. These columns are denominated Quantities in Astropy and you can see them in the taable structure. Many of them have long names and are difficult to remember and cumbersome to type. The TESS-IDA-TOOLS package has defined these string literals as constants. Notice the `from tess.ida.constants import TESSW_COLS as TW, TIMESERIES_COLS as TS, IDA_KEYWORDS as IKW` import above.
 
-Even if the string literals could change, your code will not.
+Even if the string literals could change, your code will not. For instance, in your code, to access the frequencies data, you will refer to the `table['Frequency']` column as `table[TW.FREQ]`
+
+You can see below the constants defined for the TESS-W columns. (There is another set for the TESS4C columns)
  
 ```python
-class TESSW_COLS(BaseEnum):
+class TESSW_COLS(StringEnum):
     UTC_TIME   = 'time' # always 'time' for TimeSeries Astropy Class
     LOCAL_TIME = 'Local Date & Time'
     BOX_TEMP   = 'Enclosure Temperature'
     SKY_TEMP   = 'Sky Temperature'
-    FREQ1      = 'Frequency'
-    MAG1       = 'MSAS'
-    ZP1        = 'ZP'
+    FREQ       = 'Frequency'
+    MAG        = 'MSAS'
+    ZP         = 'ZP'
     SEQ_NUM    = 'Sequence Number'
 
-class TIMESERIES_COLS(StrEnum):
+class TESS4C_COLS(StringEnum):
+    UTC_TIME   = 'time' # always 'time' for TimeSeries Astropy Class
+    LOCAL_TIME = 'Local Date & Time'
+    BOX_TEMP   = 'Enclosure Temperature'
+    SKY_TEMP   = 'Sky Temperature'
+    FREQ1      = 'Freq1'
+    MAG1       = 'MSAS1'
+    ZP1        = 'ZP1'
+    FREQ2      = 'Freq2'
+    MAG2       = 'MSAS2'
+    ZP2        = 'ZP2'
+    FREQ3      = 'Freq3'
+    MAG3       = 'MSAS3'
+    ZP3        = 'ZP3'
+    FREQ4      = 'Freq4'
+    MAG4       = 'MSAS4'
+    ZP4        = 'ZP4'
+    SEQ_NUM    = 'Sequence Number'
+```
+
+Additional columns may be aded in the IDA to ECSV conversion.
+These are the column names
+
+```python
+class TIMESERIES_COLS(StringEnum):
     SUN_ALT    = 'Sun Alt'
+    SUN_AZ     = 'Sun Az'
+    MOON_AZ    = 'Moon Alt'
     MOON_ALT   = 'Moon Alt'
     MOON_PHASE = 'Moon Phase'
 ```
 
-We can access the frequency column or the Sun altitude of the first row in the time series as:
+But you do not have to remeber all this names. The constants are self descriptive
 
 
 ```python
-table[TW.FREQ1][0]
+TW.names()
 ```
 
 
 
 
-$7.64 \; \mathrm{Hz}$
+    ['UTC_TIME',
+     'LOCAL_TIME',
+     'BOX_TEMP',
+     'SKY_TEMP',
+     'FREQ',
+     'MAG',
+     'ZP',
+     'SEQ_NUM']
+
+
+
+
+```python
+TW.values()
+```
+
+
+
+
+    ['time',
+     'Local Date & Time',
+     'Enclosure Temperature',
+     'Sky Temperature',
+     'Frequency',
+     'MSAS',
+     'ZP',
+     'Sequence Number']
+
+
+
+### Column access Examples
+
+
+```python
+table[TW.FREQ][0]
+```
+
+
+
+
+$0.34 \; \mathrm{Hz}$
 
 
 
@@ -106,13 +181,15 @@ table[TS.SUN_ALT][0]
 
 
 
-$-29.827946\mathrm{{}^{\circ}}$
+$-59.13039\mathrm{{}^{\circ}}$
 
 
 
-Metadata imported from the IDA files are available in the `meta` attribute of the table. We have also defined symbolic names for a subset of these IDA keywords like this:
+## IDA Header metadata and their symbolic names
+
+Metadata imported from the IDA files are available in the `meta` attribute of the table. There is also a symbolic set of constanst avaliable for its access:
 ```python
-class IDA_KEYWORDS(StrEnum):
+class IDA_KEYWORDS(StringEnum):
     LICENSE      = 'License'
     NUM_HEADERS  = 'Number of header lines'
     NUM_CHANNELS = 'Number of channels'
@@ -164,6 +241,8 @@ table.meta['ida']
 
 
 
+### Examples accesing IDA metadata
+
 To access the position, just type:
 
 
@@ -190,10 +269,12 @@ table.meta['ida'][IKW.POSITION]['latitude']
 
 
 
-Note that metadata has not associated AstroPy units, but we can add on the fly in our code:
+Note that metadata has not associated AstroPy units, they are not Quantities. However, we can generate them on the fly in our code by using the units subpackage on the fly in our code:
 
 
 ```python
+import astropy.units as u
+
 table.meta['ida'][IKW.POSITION]['latitude'] * u.deg
 ```
 
@@ -204,18 +285,20 @@ $38.165781\mathrm{{}^{\circ}}$
 
 
 
-We can also add new columns on the fly to the table. The processing is done for all rows. For instance, to add a Julian Day column to our TimeSeries:
+## Adding columns to the table
+
+Astropy tables are dynamic: We can also add new columns on the. The processing is done for all rows. For instance, to add a Julian Day column to our TimeSeries, we can take advantage the property `jd` on the `time` column (whose type is `Time`):
 
 
 ```python
-table['JDay'] = table['time'].jd
+table['Julian Day'] = table[TW.UTC_TIME].jd
 table.info
 ```
 
 
 
 
-    <TimeSeries length=18250>
+    <TimeSeries length=23807>
              name          dtype    unit    class  
     --------------------- ------- ------- ---------
                      time  object              Time
@@ -229,10 +312,21 @@ table.info
                  Moon Alt float64     deg  Quantity
                Moon Phase float64          Quantity
                      JDay float64            Column
+               Julian Day float64            Column
 
 
 
-And save it to a new file if needed.
+You can use the column literals as in the 'Julian Day' example above or use your own set of symbolic constants:
+
+
+```python
+class RGF(StringEnum):
+    JDAY = 'Julian Day'
+    FOO = 'Foo column'
+    BAR = 'Bar Column'
+```
+
+## Saving the Time Series table to an ECSV file
 
 
 ```python
@@ -242,23 +336,158 @@ table.write('example.ecsv', format='ascii.ecsv', delimiter=',', fast_writer=True
 
 ## Plotting
 
+To plot Astropy Quantities in matplotlib we need support from AstroPy.
+
+
 
 ```python
-figura = plt.figure(figsize=(16, 9))
-ax1=figura.add_subplot(111)
+# These two lines are needed to plot Astropy Quantities in matplotlib
+from astropy.visualization import quantity_support
+quantity_support()
+```
 
-plt.plot(table['JDay'],table[TS.MOON_ALT],'ko',ms=1)
+We will create another table with only night data based on the Sun altitude. This means creating a mask first and then apply the mask to the table. Since the Sun Altitude column has units (u.deg), we must specity the condition with units too.
+
+
+```python
+# Astronomical night :   Sun below -18 deg 
+# Civil night :   Sun below -6 deg 
+# Nautical night :   Sun below -12 deg 
+mask_night = table[TS.SUN_ALT] < -14.0 * u.deg
+night_table = table[mask_night]
+night_table.info
 ```
 
 
 
 
-    [<matplotlib.lines.Line2D at 0x70a95d914f10>]
+    <TimeSeries length=17236>
+             name          dtype    unit    class  
+    --------------------- ------- ------- ---------
+                     time  object              Time
+    Enclosure Temperature float64   deg_C  Quantity
+          Sky Temperature float64   deg_C  Quantity
+                Frequency float64      Hz  Quantity
+                     MSAS float64 mag(Hz) Magnitude
+                       ZP float64            Column
+          Sequence Number   int64            Column
+                  Sun Alt float64     deg  Quantity
+                 Moon Alt float64     deg  Quantity
+               Moon Phase float64          Quantity
+                     JDay float64            Column
+               Julian Day float64            Column
+
+
+
+We will plot an histogram comparing all the accumulated data from all days and only the night data
+
+
+```python
+
+
+figure = plt.figure(figsize=(12, 5))
+ax1=figure.add_subplot(111)
+bins = np.arange(13,21,0.2)
+
+plt.hist(table[TW.MAG],bins=bins,alpha=1,label='all data')
+plt.hist(night_table[TW.MAG],bins=bins,alpha=1,label='night')
+plt.legend()
+plt.title('stars289 Nerpio 2023/05')
+```
+
+
+
+
+    Text(0.5, 1.0, 'stars289 Nerpio 2023/05')
 
 
 
 
     
-![png](output_23_1.png)
+![png](output_38_1.png)
     
 
+
+
+```python
+figure = plt.figure(figsize=(9, 4))
+ax1=figure.add_subplot(111)
+plt.plot(table[TS.SUN_ALT],table[TW.MAG],'bo',ms=1)
+plt.plot(night_table[TS.SUN_ALT],night_table[TW.MAG],'ro',ms=1)
+plt.ylim(14,24)
+#plt.axhline(22)
+plt.xlim(-40,0)
+plt.grid()
+```
+
+
+    
+![png](output_39_0.png)
+    
+
+
+#### Mask Moon over horizon
+
+
+```python
+# moonless nights: Moon below 0 deg 
+moon_mask = night_table[TS.MOON_ALT] < 0.0 * u.deg
+moonless_night_table = night_table[moon_mask]
+```
+
+
+```python
+figure = plt.figure(figsize=(9, 4))
+ax1=figure.add_subplot(111)
+plt.plot(night_table[TS.SUN_ALT],night_table[TW.MAG],'bo',ms=1,label='all data')
+plt.plot(moonless_night_table[TS.SUN_ALT],moonless_night_table[TW.MAG],'ro',ms=1,label='no Moon')
+plt.ylim(14,24)
+plt.xlim(-40,-10)
+plt.legend(ncol=2)
+plt.title('stars289 Nerpio 2023/05')
+plt.xlabel('Sun altitude')
+plt.ylabel('TESS-W NSB')
+```
+
+
+
+
+    Text(0, 0.5, 'TESS-W NSB')
+
+
+
+
+    
+![png](output_42_1.png)
+    
+
+
+
+```python
+figure = plt.figure(figsize=(12, 6))
+ax=figure.add_subplot(111)
+bins = np.arange(16,24,0.1)
+plt.hist(night_table[TW.MAG],bins=bins,label='all nights')
+plt.hist(moonless_night_table[TW.MAG],bins=bins,label='moonless')
+plt.xlim(16,24)
+plt.legend()
+plt.text(0.01,0.9,'stars289 2023/05 data',ha='left',va='center', transform=ax.transAxes)
+```
+
+
+
+
+    Text(0.01, 0.9, 'stars289 2023/05 data')
+
+
+
+
+    
+![png](output_43_1.png)
+    
+
+
+
+```python
+
+```
