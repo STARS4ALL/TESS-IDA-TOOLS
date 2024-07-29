@@ -51,9 +51,9 @@ class TESSW_COLS(BaseEnum):
     LOCAL_TIME = 'Local Date & Time'
     BOX_TEMP   = 'Enclosure Temperature'
     SKY_TEMP   = 'Sky Temperature'
-    FREQ1      = 'Frequency'
-    MAG1       = 'MSAS'
-    ZP1        = 'ZP'
+    FREQ       = 'Frequency'
+    MAG        = 'MSAS'
+    ZP         = 'ZP'
     SEQ_NUM    = 'Sequence Number'
 
 # TESS-4C data column names

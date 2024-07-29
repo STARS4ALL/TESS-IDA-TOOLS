@@ -58,7 +58,7 @@ IDA_NAMES_4C = T4C.values()
 
 # data types for column names
 IDA_DTYPES = {TEW.UTC_TIME: str, TEW.LOCAL_TIME: str, TEW.BOX_TEMP: float, 
-    TEW.SKY_TEMP: float, TEW.FREQ1: float, TEW.MAG1: float, TEW.ZP1: float, TEW.SEQ_NUM: int}
+    TEW.SKY_TEMP: float, TEW.FREQ: float, TEW.MAG: float, TEW.ZP: float, TEW.SEQ_NUM: int}
 IDA_DTYPES_4C = {T4C.UTC_TIME: str, T4C.LOCAL_TIME: str,  T4C.BOX_TEMP: float, T4C.SKY_TEMP: float, 
     T4C.FREQ1: float, T4C.MAG1: float, T4C.ZP1: float, T4C.FREQ2: float, T4C.MAG2: float, T4C.ZP2: float,
     T4C.FREQ3: float, T4C.MAG3: float, T4C.ZP3: float, T4C.FREQ4: float, T4C.MAG4: float, T4C.ZP4: float,
@@ -170,8 +170,8 @@ def ida_to_table(path: str, fix: bool) -> TimeSeries:
     table[TEW.BOX_TEMP] = table[TEW.BOX_TEMP] * u.deg_C
     table[TEW.SKY_TEMP] = table[TEW.SKY_TEMP] * u.deg_C
     if nchannels == 1:
-        table[TEW.FREQ1] = table[TEW.FREQ1] * u.Hz
-        table[TEW.MAG1]  = table[TEW.MAG1] * u.mag(u.Hz)
+        table[TEW.FREQ] = table[TEW.FREQ] * u.Hz
+        table[TEW.MAG]  = table[TEW.MAG] * u.mag(u.Hz)
     else:
         table[T4C.FREQ1] = table[T4C.FREQ1] * u.Hz
         table[T4C.MAG1] = table[T4C.MAG1] * u.mag(u.Hz)
