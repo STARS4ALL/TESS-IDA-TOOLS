@@ -47,4 +47,7 @@ As the final step, we must initialize the database:
 ```bash
 tess-ida-db --console schema create
 ```
+
+***Warning*** When issuing a `tess-ida-db schema create`, the previous database file is deleted !
+
 All the configuration is done now.

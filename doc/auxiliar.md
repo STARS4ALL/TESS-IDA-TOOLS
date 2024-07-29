@@ -5,6 +5,9 @@ There are two issues to solve:
 * Detect change of monthly IDA files (most likely metadata)
 * Supply `Position` coordinates when needed if the IDA monthly file doesn't provide them.
 
+***Warning*** When issuing a `tess-ida-db schema create`, the previous database file is deleted !
+
+
 ## IDA Monthly Files change
 
 Computing Sun & Moon data for a monthly file takes about 1-2 minutes, depending on the file size and computer. This must be multiplied
