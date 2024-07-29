@@ -39,6 +39,7 @@ class IDA_KEYWORDS(StringEnum):
     NUM_CHANNELS = 'Number of channels'
     OBSERVER     = 'Data supplier'
     LOCATION     = 'Location name'
+    TIMEZONE     = 'Local timezone'
     POSITION     = 'Position'
     FOV          = 'Field of view'
     COVER_OFFSET = 'TESS cover offset value'
