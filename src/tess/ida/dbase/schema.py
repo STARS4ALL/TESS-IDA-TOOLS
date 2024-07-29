@@ -58,31 +58,6 @@ DESCRIPTION = "Database utility to speed up pipeline processing"
 log = logging.getLogger(__name__.split('.')[-1])
 
 
-def create_schema(dbase_path: str, sql_text: str) -> None:
-    log.info("Creating SQLite Schema on %s", dbase_path)
-    base_path = decouple.config('DATABASE_FILE')
-    try:
-        connection = sqlite3.connect(dbase_path)
-        connection.executescript(sql_text)
-    except sqlite3.OperationalError as e:
-        log.error("Error using the Python API")
-        log.error(e)
-    finally:
-        connection.close()
-      
-
-def create_database_file(dbase_path: str) -> None:
-    '''Creates a Database file if not exists and returns a connection'''
-    dbase_path = decouple.config('DATABASE_FILE')
-    output_dir = os.path.dirname(dbase_path)
-    output_dir = os.getcwd() if not output_dir else output_dir
-    os.makedirs(output_dir, exist_ok=True)
-    if not os.path.exists(dbase_path):
-        with open(dbase_path, 'w') as f:
-            pass
-    sqlite3.connect(dbase_path).close() # Creates an empty SQLite database
-
-
 # ================================
 # COMMAND LINE INTERFACE FUNCTIONS
 # ================================
@@ -93,8 +68,17 @@ def cli_schema_create(args: Namespace) -> None:
     if os.path.isfile(dbase_path):
         log.info("Deleting auxiliar database: %s", dbase_path)
         os.remove(dbase_path)
-    create_database_file(dbase_path)
-    create_schema(dbase_path, SCHEMA_SQL_TEXT)
+    output_dir = os.path.dirname(dbase_path)
+    output_dir = os.getcwd() if not output_dir else output_dir
+    os.makedirs(output_dir, exist_ok=True)
+    log.info("Creating SQLite Schema on %s", dbase_path)
+    try:
+        with sqlite3.connect(dbase_path) as connection:
+            connection.executescript(SCHEMA_SQL_TEXT)
+    except sqlite3.OperationalError as e:
+        log.error("Error creating the database: %s",e)
+    finally:
+        connection.close()
 
 
 def cli_coords_add(args: Namespace) -> None:

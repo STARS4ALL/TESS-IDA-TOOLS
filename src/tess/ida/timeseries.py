@@ -121,7 +121,7 @@ def ida_metadata(path, fix):
             log.error("[%s] [%s] Unknown Observer coordinates", name, month)
             log.error("[%s] [%s] Add coordinates to aux. coordinates table & re-run with --fix", name, month)
             raise NoCoordinatesError
-        coords = aux_table_coords_lookup(name)
+        coords =  next(aux_table_coords_lookup(name))
         if not coords:
             log.error("[%s] [%s] Could not find alternative coordinates in the aux. coordinates table", name, month)
             raise NoCoordinatesError
@@ -224,7 +224,7 @@ def append_table(acc: TimeSeries, table: TimeSeries) -> TimeSeries:
 def do_to_ecsv_single(in_path: str, out_path: str, fix: bool) -> None:
     name , month = name_month(in_path)
     data = [os.path.basename(in_path), hash_func(in_path)]
-    result = aux_table_hashes_lookup(data[0])
+    result = next(aux_table_hashes_lookup(data[0]))
     if result:
         _, stored_hash_str = result
         if data[1] != stored_hash_str or not os.path.isfile(out_path):

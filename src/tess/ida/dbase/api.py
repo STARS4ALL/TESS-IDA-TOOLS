@@ -12,7 +12,7 @@ import os
 import logging
 import sqlite3
 
-from typing import Any, Union, Generator
+from typing import Any, Union, Iterator
 from argparse import Namespace, ArgumentParser
 from collections.abc import Sequence
 
@@ -72,7 +72,7 @@ try:
             conn.execute('UPDATE ecsv_t SET hash = ? WHERE filename = ?', (data[1], data[0]))
         conn.close()
 
-    def aux_table_hashes_lookup(filename: str) -> Generator[OptRow]:
+    def aux_table_hashes_lookup(filename: str) -> Iterator[OptRow]:
         global theDatabaseFile
         with sqlite3.connect(theDatabaseFile) as conn:
             cursor = conn.cursor()
@@ -80,7 +80,7 @@ try:
         yield cursor.fetchone()
         conn.close()
 
-    def aux_table_coords_lookup(name: str) -> Generator[OptRow]:
+    def aux_table_coords_lookup(name: str) -> Iterator[OptRow]:
         global theDatabaseFile
         with sqlite3.connect(theDatabaseFile) as conn:
             cursor = conn.cursor()
@@ -93,13 +93,13 @@ except decouple.UndefinedValueError:
         log.warning("No Auxiliar database was configured. Check 'DATABASE_FILE' environment variable")
     def aux_dbase_save() -> None:
         log.warning("No Auxiliar database was configured. Check 'DATABASE_FILE' environment variable")
-    def aux_table_hashes_lookup(filename: str) -> Generator[OptRow]:
+    def aux_table_hashes_lookup(filename: str) -> Iterator[OptRow]:
         yield None
     def aux_table_hashes_insert(data: Sequence[str, str]) -> None:
         pass
     def aux_table_hashes_update(data: Sequence[str, str]) -> None:
         pass
-    def aux_table_coords_lookup(name) -> Generator[OptRow]:
+    def aux_table_coords_lookup(name) -> Iterator[OptRow]:
         yield None
 
 

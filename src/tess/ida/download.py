@@ -81,14 +81,14 @@ async def do_ida_range(session, base_url: str, ida_base_dir: str, name: str, sin
 # Generic API
 # ===========
 
-async def ida_single(base_url: str, ida_base_dir: str, name: str, month: OptStr, exact:OptStr, timeout:int = 4) -> None:
+async def download_ida_single(base_url: str, ida_base_dir: str, name: str, month: OptStr, exact:OptStr, timeout:int = 4) -> None:
     async with aiohttp.ClientSession() as session:
         if not exact:
             month = month.strftime('%Y-%m')
         await do_ida_single(session, base_url, ida_base_dir, name, month, exact, timeout)
 
 
-async def ida_range(base_url: str, ida_base_dir: str, name: str, since: datetime, until: datetime, concurrent: int, timeout:int = 4) -> None:
+async def download_ida_range(base_url: str, ida_base_dir: str, name: str, since: datetime, until: datetime, concurrent: int, timeout:int = 4) -> None:
     async with aiohttp.ClientSession() as session:
         await do_ida_range(session, base_url, ida_base_dir, name, since, until, concurrent, timeout)
 
@@ -111,7 +111,7 @@ async def ida_photometers(base_url: str, ida_base_dir: str, rang: list[int], seq
 # ================================
 
 async def cli_ida_single(base_url: str, args: Namespace) -> None:
-    await ida_single(
+    await download_ida_single(
         base_url = base_url,
         ida_base_dir = args.out_dir,
         name = args.name,
@@ -121,7 +121,7 @@ async def cli_ida_single(base_url: str, args: Namespace) -> None:
 
 
 async def cli_ida_range(base_url: str, args: Namespace) -> None:
-    await ida_range(
+    await download_ida_range(
         base_url = base_url,
         ida_base_dir = args.out_dir, 
         name = args.name, 
