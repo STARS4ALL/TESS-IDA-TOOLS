@@ -2,7 +2,8 @@
 
 ***Note:*** Make sure that you have already completed the installation and configuration procedure before following this example.
 
-## Getting the files
+## Getting the IDA files and converting them to ECSV
+
 In your jupyter working directory, with the activated virtual environment, type:
 
 ```bash
