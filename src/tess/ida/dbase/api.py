@@ -57,8 +57,7 @@ try:
         theConnection = sqlite3.connect(theDatabaseFile)
       
     def aux_dbase_save() -> None:      
-        log.info("Closing auxiliar database %s", theDatabaseFile)
-
+        pass
 
     def aux_table_hashes_insert(data: Sequence[str, str]) -> None:
         global theDatabaseFile
