@@ -39,10 +39,8 @@ from lica.typing import OptStr
 # -------------
 
 from .. import __version__
-#from .admdb import adm_dbase_load, adm_dbase_save
-#from .admdb import adm_table_hashes_lookup, adm_table_hashes_insert, adm_table_hashes_update, adm_table_coords_lookup
-from .dbase import adm_dbase_load, adm_dbase_save
-from .dbase import adm_table_hashes_lookup, adm_table_hashes_insert, adm_table_hashes_update, adm_table_coords_lookup
+from .dbase import aux_dbase_load, aux_dbase_save
+from .dbase import aux_table_hashes_lookup, aux_table_hashes_insert, aux_table_hashes_update, aux_table_coords_lookup
 
 from .constants import TESSW_COLS as TEW, TESS4C_COLS as T4C, TIMESERIES_COLS as TS, IDA_KEYWORDS as IKW,  IDA_HEADER_LEN
 from .utils import cur_month, prev_month, to_phot_dir, makedirs, v_or_n, month_range, name_month, hash_func
@@ -121,11 +119,11 @@ def ida_metadata(path, fix):
     except TypeError:
         if not fix:
             log.error("[%s] [%s] Unknown Observer coordinates", name, month)
-            log.error("[%s] [%s] Add coordinates to adm coordinates table & re-run with --fix", name, month)
+            log.error("[%s] [%s] Add coordinates to aux. coordinates table & re-run with --fix", name, month)
             raise NoCoordinatesError
-        coords = adm_table_coords_lookup(name)
+        coords = aux_table_coords_lookup(name)
         if not coords:
-            log.error("[%s] [%s] Could not find alternative coordinates in the adm coordinates table", name, month)
+            log.error("[%s] [%s] Could not find alternative coordinates in the aux. coordinates table", name, month)
             raise NoCoordinatesError
         _, lati, longi, h = coords
         log.warning("[%s] [%s] Fixed alternative coordinates (lat: %f, long: %f, h: %f) from the adm coordinates table", 
@@ -226,18 +224,18 @@ def append_table(acc: TimeSeries, table: TimeSeries) -> TimeSeries:
 def do_to_ecsv_single(in_path: str, out_path: str, fix: bool) -> None:
     name , month = name_month(in_path)
     data = [os.path.basename(in_path), hash_func(in_path)]
-    result = adm_table_hashes_lookup(data[0])
+    result = aux_table_hashes_lookup(data[0])
     if result:
         _, stored_hash_str = result
         if data[1] != stored_hash_str or not os.path.isfile(out_path):
-            adm_table_hashes_update(data)
+            aux_table_hashes_update(data)
             table = create_table(in_path, fix)
             save_table(table, out_path)
         else:
             log.info("[%s] [%s] Time Series already in ECSV file: %s", name, month, out_path)
     else:
-        adm_table_hashes_insert(data)
-        table = create_table(in_path)
+        aux_table_hashes_insert(data)
+        table = create_table(in_path, fix)
         save_table(table, out_path)
    
 # ===========
@@ -361,12 +359,12 @@ CMD_TABLE = {
 def cli_to_ecsv(args: Namespace) -> None:
     '''The main entry point specified by pyprojectable.toml'''
     func = CMD_TABLE[args.command]
-    adm_dbase_load()
+    aux_dbase_load()
     try:
         func(args)
     except NoCoordinatesError:
         pass
-    adm_dbase_save()
+    aux_dbase_save()
     log.info("done!")
 
 def main() -> None:

@@ -91,7 +91,7 @@ def create_database_file(dbase_path: str) -> None:
 def cli_schema_create(args: Namespace) -> None:
     dbase_path = decouple.config('DATABASE_FILE')
     if os.path.isfile(dbase_path):
-        log.info("Deleting administrative database: %s", dbase_path)
+        log.info("Deleting auxiliar database: %s", dbase_path)
         os.remove(dbase_path)
     create_database_file(dbase_path)
     create_schema(dbase_path, SCHEMA_SQL_TEXT)

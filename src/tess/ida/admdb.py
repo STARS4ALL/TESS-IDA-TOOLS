@@ -57,13 +57,13 @@ try:
 
     def adm_table_hashes_load() -> None:
         global theHashesTable, theHashesFile
-        log.info("Loading administrative Table from %s", theHashesFile)
+        log.info("Loading auxiliar Table from %s", theHashesFile)
         theHashesTable = Table.read(theHashesFile, format='ascii.ecsv', delimiter=',')
         theHashesTable.add_index('filename',  unique=True, engine=SCEngine)
         
     def adm_table_hashes_save():
         global theHashesTable, theHashesFile
-        log.info("Saving administrative Table to %s", theHashesFile)
+        log.info("Saving auxiliar Table to %s", theHashesFile)
         theHashesTable.write(theHashesFile, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
 
     def adm_table_hashes_insert(data: Sequence[str, str]) -> None:
@@ -84,9 +84,9 @@ try:
 
 except decouple.UndefinedValueError:
     def adm_table_hashes_load() -> None:
-        log.warning("No Adminsitrative table for IDA files' hashes")
+        log.warning("No Auxiliar table for IDA files' hashes")
     def adm_table_hashes_save() -> None:
-        log.warning("No Adminsitrative table for IDA files' hashes")
+        log.warning("No Auxiliar table for IDA files' hashes")
     def adm_table_hashes_lookup(filename: str) -> OptRow:
         return None
     def adm_table_hashes_insert(data: Sequence[str, str]) -> None:
@@ -102,13 +102,13 @@ try:
 
     def adm_table_coords_load() -> None:
         global theLocationsTable, theLocationsFile
-        log.info("Loading administrative Table from %s", theLocationsFile)
+        log.info("Loading auxiliar Table from %s", theLocationsFile)
         theLocationsTable = Table.read(theLocationsFile, format='ascii.ecsv', delimiter=',')
         theLocationsTable.add_index('phot_name', unique=True, engine=SCEngine)
 
     def adm_table_coords_save() -> None:
         global theLocationsTable, theLocationsFile
-        log.info("Saving administrative Table to %s", theLocationsFile)
+        log.info("Saving auxiliar Table to %s", theLocationsFile)
         theLocationsTable.write(theLocationsFile, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
 
     def adm_table_coords_lookup(phot_name: str) -> OptRow:
@@ -121,9 +121,9 @@ try:
 
 except decouple.UndefinedValueError:
     def adm_table_coords_load() -> None:
-        log.warning("No Adminsitrative table for photometers' coordinates")
+        log.warning("No Auxiliar table for photometers' coordinates")
     def adm_table_coords_save() -> None:
-        log.warning("No Adminsitrative table for photometers' coordinates")
+        log.warning("No Auxiliar table for photometers' coordinates")
     def adm_table_coords_lookup(name) -> OptRow:
         return None
 
@@ -146,7 +146,7 @@ def cli_schema_create(args: Namespace) -> None:
             table_file = decouple.config(env_var)
             table_files.append(table_file)
             if os.path.isfile(table_file):
-                log.info("Deleting administrative Table: %s", table_file)
+                log.info("Deleting auxiliar Table: %s", table_file)
                 os.remove(table_file)
             dirname = os.path.dirname(table_file)
             if dirname:
@@ -155,14 +155,14 @@ def cli_schema_create(args: Namespace) -> None:
             table_files.append(None)
             log.warning("environment variable %s not found in .env file", env_var)
     if table_files[0]:
-        log.info("Creating an empty administrative Table file: %s", table_files[0])
+        log.info("Creating an empty auxiliar Table file: %s", table_files[0])
         table = Table([tuple(), tuple()], 
             names=('filename', 'hash'), 
             dtype=('str', 'str')
         )
         table.write(table_files[0], format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
     if table_files[1]:
-        log.info("Creating an empty administrative Table file: %s", table_files[1])
+        log.info("Creating an empty auxiliar Table file: %s", table_files[1])
         table = Table([tuple(), tuple(), tuple(), tuple()], 
             names=('phot_name', 'latitude', 'longitude', 'height'), 
             dtype=('str', 'float','float','float')
@@ -172,7 +172,7 @@ def cli_schema_create(args: Namespace) -> None:
 
 def cli_coords_add(args: Namespace) -> None:
     coords_file = decouple.config('COORDS_TABLE')
-    log.info("Loading administrative Table from %s", coords_file)
+    log.info("Loading auxiliar Table from %s", coords_file)
     table = Table.read(coords_file, format='ascii.ecsv', delimiter=',')
     table.add_index('phot_name', unique=True)
     log.info("[%s] Adding coordinates entry: Lat = %s, Long = %s, Height = %s", 
@@ -186,7 +186,7 @@ def cli_coords_add(args: Namespace) -> None:
 
 def cli_coords_update(args: Namespace) -> None:
     coords_file = decouple.config('COORDS_TABLE')
-    log.info("Loading administrative Table from %s", coords_file)
+    log.info("Loading auxiliar Table from %s", coords_file)
     table = Table.read(coords_file, format='ascii.ecsv', delimiter=',')
     table.add_index('phot_name', unique=True)
     try:
@@ -208,7 +208,7 @@ def cli_coords_update(args: Namespace) -> None:
 
 def cli_coords_delete(args: Namespace) -> None:
     coords_file = decouple.config('COORDS_TABLE')
-    log.info("Loading administrative Table from %s", coords_file)
+    log.info("Loading auxiliar Table from %s", coords_file)
     table = Table.read(coords_file, format='ascii.ecsv', delimiter=',')
     table.add_index('phot_name', unique=True)
     try:

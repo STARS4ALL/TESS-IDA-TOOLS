@@ -11,5 +11,5 @@ simple [get-tess-ida.py](doc/get-tess-ida.md) script is all that you need. Read 
 * [Download IDA files](doc/download.md)
 * [Transform an IDA monthly file to an ECSV file](doc/transform.md)
 * [Merge a range of ECSV files](doc/transform.md)
-* [The administrative database](doc/administrative.md)
+* [The auxiliar database](doc/auxiliar.md)
 * [Analisys example](doc/example.md)

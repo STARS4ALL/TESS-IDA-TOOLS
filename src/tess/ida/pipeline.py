@@ -31,8 +31,7 @@ from lica.typing import OptStr
 # -------------
 
 from .. import __version__
-#from .admdb import adm_dbase_load, adm_dbase_save
-from .dbase import adm_dbase_load, adm_dbase_save
+from .dbase import aux_dbase_load, aux_dbase_save
 from .utils import cur_month, prev_month, group, month_range, makedirs
 from .download import ida_single, ida_range
 from .timeseries import to_ecsv_single, to_ecsv_range, to_ecsv_combine, NoCoordinatesError
@@ -133,12 +132,12 @@ async def cli_pipeline(args: Namespace) -> None:
     '''The main entry point specified by pyproject.toml'''
     base_url = decouple.config('IDA_URL')
     func = CMD_TABLE[args.command]
-    adm_dbase_load()
+    aux_dbase_load()
     try:
         await func(base_url, args)
     except NoCoordinatesError:
         pass
-    adm_dbase_save()
+    aux_dbase_save()
     log.info("done!")
 
 

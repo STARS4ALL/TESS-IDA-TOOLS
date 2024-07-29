@@ -12,7 +12,7 @@ import os
 import logging
 import sqlite3
 
-from typing import Any, Union
+from typing import Any, Union, Generator
 from argparse import Namespace, ArgumentParser
 from collections.abc import Sequence
 
@@ -45,55 +45,61 @@ OptRow = Union[tuple, None]
 # -----------------------
 
 # get the module logger
-log = logging.getLogger(__name__.split('.')[-1])
+log = logging.getLogger(__name__.split('.')[-2])
 
 try:
     theConnection = None
     theDatabaseFile = decouple.config('DATABASE_FILE')
 
-    def adm_dbase_load() -> None:
-        global theConnection, theDatabaseFile
-        log.info("Opening administrative database from %s", theDatabaseFile)
+    def aux_dbase_load() -> None:
+        global theDatabaseFile
+        log.info("Opening auxiliar database from %s", theDatabaseFile)
         theConnection = sqlite3.connect(theDatabaseFile)
       
-    def adm_dbase_save():
-        global theConnection, theDatabaseFile
-        log.info("Commiting changes to administrative database %s", theDatabaseFile)
-        theConnection.commit()
-        theConnection.close()
+    def aux_dbase_save() -> None:      
+        log.info("Closing auxiliar database %s", theDatabaseFile)
 
-    def adm_table_hashes_insert(data: Sequence[str, str]) -> None:
-        global theConnection
-        theConnection.execute('INSERT INTO ecsv_t(filename, hash) VALUES(?,?)', data)
 
-    def adm_table_hashes_update(data: Sequence[str, str]) -> None:
-        global theConnection
-        theConnection.execute('UPDATE ecsv_t SET hash = ? WHERE filename = ?', (data[1], data[0]))
+    def aux_table_hashes_insert(data: Sequence[str, str]) -> None:
+        global theDatabaseFile
+        with sqlite3.connect(theDatabaseFile) as conn:
+            conn.execute('INSERT INTO ecsv_t(filename, hash) VALUES(?,?)', data)
+        conn.close()
 
-    def adm_table_hashes_lookup(filename: str) -> OptRow:
-        global theConnection
-        cursor = theConnection.cursor()
-        cursor.execute('SELECT filename, hash FROM ecsv_t WHERE filename = ?', (filename,))
-        return cursor.fetchone()
+    def aux_table_hashes_update(data: Sequence[str, str]) -> None:
+        global theDatabaseFile
+        with sqlite3.connect(theDatabaseFile) as conn:
+            conn.execute('UPDATE ecsv_t SET hash = ? WHERE filename = ?', (data[1], data[0]))
+        conn.close()
 
-    def adm_table_coords_lookup(name: str) -> OptRow:
-        global theConnection
-        cursor = theConnection.cursor()
-        cursor.execute('SELECT phot_name, latitude, longitude, elevation FROM coords_t WHERE name = ?', (name,))
-        return cursor.fetchone()
+    def aux_table_hashes_lookup(filename: str) -> Generator[OptRow]:
+        global theDatabaseFile
+        with sqlite3.connect(theDatabaseFile) as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT filename, hash FROM ecsv_t WHERE filename = ?', (filename,))
+        yield cursor.fetchone()
+        conn.close()
+
+    def aux_table_coords_lookup(name: str) -> Generator[OptRow]:
+        global theDatabaseFile
+        with sqlite3.connect(theDatabaseFile) as conn:
+            cursor = conn.cursor()
+        cursor.execute('SELECT phot_name, latitude, longitude, height FROM coords_t WHERE phot_name = ?', (name,))
+        yield cursor.fetchone()
+        conn.close()
 
 except decouple.UndefinedValueError:
-    def adm_dbase_load() -> None:
-        log.warning("No Adminsitrative database was configured")
-    def adm_dbase_load() -> None:
-        log.warning("No Adminsitrative database was configured")
-    def adm_table_hashes_lookup(filename: str) -> OptRow:
-        return None
-    def adm_table_hashes_insert(data: Sequence[str, str]) -> None:
+    def aux_dbase_load() -> None:
+        log.warning("No Auxiliar database was configured. Check 'DATABASE_FILE' environment variable")
+    def aux_dbase_save() -> None:
+        log.warning("No Auxiliar database was configured. Check 'DATABASE_FILE' environment variable")
+    def aux_table_hashes_lookup(filename: str) -> Generator[OptRow]:
+        yield None
+    def aux_table_hashes_insert(data: Sequence[str, str]) -> None:
         pass
-    def adm_table_hashes_update(data: Sequence[str, str]) -> None:
+    def aux_table_hashes_update(data: Sequence[str, str]) -> None:
         pass
-    def adm_table_coords_lookup(name) -> OptRow:
-        return None
+    def aux_table_coords_lookup(name) -> Generator[OptRow]:
+        yield None
 
 
