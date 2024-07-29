@@ -52,7 +52,7 @@ tess-ida-db --console coords update --name stars4 --longitude -3.15
 tess-ida-db --console coords update --name stars4 --latitude 40.8 --height 690
 ```
 
-2. ***Delete al related ECSV files !***
+2. Delete ***all related ECSV files !***
 
 ```bash
 rm -fr ECSV/stars4/*.ecsv
@@ -76,7 +76,7 @@ You probably want this once you know that the IDA monthly files incorporate Posi
 tess-ida-db --console coords delete --name stars4
 ```
 
-2. ***Delete al related ECSV files !***
+2. Delete ***all related ECSV files !***
 
 ```bash
 rm -fr ECSV/stars4/*.ecsv
