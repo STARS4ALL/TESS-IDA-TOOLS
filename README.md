@@ -7,7 +7,7 @@ simple [get-tess-ida.py](doc/get-tess-ida.md) script is all that you need. Read 
 
 # Summary
 * [Installation and configuration](doc/install.md).
-* [Avaliable utilities](doc(utilities.md))
+* [Avaliable utilities](doc/utilities.md))
 * [Usage example](doc/example.md)
 * [The IDA monthly files](doc/IDA.md).
 * [The auxiliar database](doc/auxiliar.md)
