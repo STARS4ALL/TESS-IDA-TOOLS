@@ -14,11 +14,11 @@ jupyter$ source .venv/bin/activate
 (.venv)  jupyter$ 
 ```
 
-Now we install jupyter:
+Now we install jupyter and matplotlib for the charts:
 
 ```bash
 pip install -U pip
-pip install notebook
+pip install notebook matplotlib
 ```
 
 And then our TESS-IDA-TOOLS, directly from our [GitHub repository](https://github.com/STARS4ALL/TESS-IDA-TOOLS):
