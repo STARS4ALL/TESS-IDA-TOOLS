@@ -62,10 +62,22 @@ table.info
 
 
 
+
+```python
+
+```
+
+
+```python
+
+```
+
 The first column is always the `time` column and this is imposed by AstroPy.
 
-Note that many of the columns have units attached to them. The column names are taken from the IDA files metadata (but not parsed!). They are inconvenient to work with and may be subject to change. To protect our code from this event we use Python constants (actually Python String enumerations). Here are the constants, as defined by the TESS-IDA-TOOLS package and imported in the header of this notebook:
+Note that many of the columns have units attached to them. Many of them have long names and are difficult to remember. The TESS-IDA-TOOLS package has defined them as constants. Notice the `from tess.ida.constants import TESSW_COLS as TW, TIMESERIES_COLS as TS, IDA_KEYWORDS as IKW` import above.
 
+Even if the string literals could change, your code will not.
+ 
 ```python
 class TESSW_COLS(BaseEnum):
     UTC_TIME   = 'time' # always 'time' for TimeSeries Astropy Class
@@ -237,7 +249,7 @@ plt.plot(table['JDay'],table[TS.MOON_ALT],'ko',ms=1)
 
 
     
-![png](output_22_1.png)
+![png](output_24_1.png)
     
 
 
