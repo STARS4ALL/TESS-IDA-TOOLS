@@ -28,7 +28,7 @@ print(FILE_TO_PROCESS)
 
 We load this file as a TimeSeries AstroPy Table. TimeSeries tables have a special first column named `time` and also have additional methods for processing. See the [AstroPy documentation](https://docs.astropy.org/en/stable/timeseries/index.html) for more details.
 
-Note that the format is always `ascii.ecsv`
+Note that the format is always `ascii.ecsv` and the delimiter is always a comma.
 
 
 ```python
@@ -58,19 +58,8 @@ table.info
                   Sun Alt float64     deg  Quantity
                  Moon Alt float64     deg  Quantity
                Moon Phase float64          Quantity
-                     JDay float64            Column
 
 
-
-
-```python
-
-```
-
-
-```python
-
-```
 
 The first column is always the `time` column and this is imposed by AstroPy.
 
@@ -264,17 +253,12 @@ plt.plot(table['JDay'],table[TS.MOON_ALT],'ko',ms=1)
 
 
 
-    [<matplotlib.lines.Line2D at 0x742414c36380>]
+    [<matplotlib.lines.Line2D at 0x70a95d914f10>]
 
 
 
 
     
-![png](output_26_1.png)
+![png](output_23_1.png)
     
 
-
-
-```python
-
-```
