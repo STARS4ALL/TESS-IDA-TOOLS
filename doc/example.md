@@ -28,3 +28,5 @@ The second step to perform in the command line is launching Jupyter Notebook. Fr
 ```bash
 jupyer notebook
 ```
+
+A snapshot of the notebook can be seen [here](doc/TESS-IDA-TOOLS-Example.md)
