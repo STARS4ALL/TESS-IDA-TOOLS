@@ -220,15 +220,36 @@ We can also add new columns on the fly to the table. The processing is done for 
 
 ```python
 table['JDay'] = table['time'].jd
-table['JDay'][0]
+table.info
 ```
 
 
 
 
-    2460096.5004282407
+    <TimeSeries length=18250>
+             name          dtype    unit    class  
+    --------------------- ------- ------- ---------
+                     time  object              Time
+    Enclosure Temperature float64   deg_C  Quantity
+          Sky Temperature float64   deg_C  Quantity
+                Frequency float64      Hz  Quantity
+                     MSAS float64 mag(Hz) Magnitude
+                       ZP float64            Column
+          Sequence Number   int64            Column
+                  Sun Alt float64     deg  Quantity
+                 Moon Alt float64     deg  Quantity
+               Moon Phase float64          Quantity
+                     JDay float64            Column
 
 
+
+And save it to a new file if needed.
+
+
+```python
+table.write('example.ecsv', format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
+
+```
 
 ## Plotting
 
@@ -249,7 +270,7 @@ plt.plot(table['JDay'],table[TS.MOON_ALT],'ko',ms=1)
 
 
     
-![png](output_24_1.png)
+![png](output_26_1.png)
     
 
 
