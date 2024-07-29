@@ -29,4 +29,4 @@ The second step to perform in the command line is launching Jupyter Notebook. Fr
 jupyer notebook
 ```
 
-A snapshot of the notebook can be seen [here](doc/TESS-IDA-TOOLS-Example.md)
+A snapshot of the notebook can be seen [here](TESS-IDA-TOOLS-Example.md)
