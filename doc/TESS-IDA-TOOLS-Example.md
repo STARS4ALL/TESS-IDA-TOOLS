@@ -66,6 +66,30 @@ table.info
 
 
 
+Tou can see a selection of the first 5 rows in the table: 
+
+
+```python
+table[0:5]
+```
+
+
+
+
+<div><i>TimeSeries length=5</i>
+<table id="table139687088880368" class="table-striped table-bordered table-condensed">
+<thead><tr><th>time</th><th>Enclosure Temperature</th><th>Sky Temperature</th><th>Frequency</th><th>MSAS</th><th>ZP</th><th>Sequence Number</th><th>Sun Alt</th><th>Moon Alt</th><th>Moon Phase</th></tr></thead>
+<thead><tr><th></th><th>deg_C</th><th>deg_C</th><th>Hz</th><th>mag(Hz)</th><th></th><th></th><th>deg</th><th>deg</th><th></th></tr></thead>
+<thead><tr><th>Time</th><th>float64</th><th>float64</th><th>float64</th><th>float64</th><th>float64</th><th>int64</th><th>float64</th><th>float64</th><th>float64</th></tr></thead>
+<tr><td>2022-03-01T00:00:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.63</td><td>20.45</td><td>96365</td><td>-59.13039024030824</td><td>-68.3424898300323</td><td>0.870399740158756</td></tr>
+<tr><td>2022-03-01T00:01:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96366</td><td>-59.164849992604935</td><td>-68.22004567629244</td><td>0.8704498032546856</td></tr>
+<tr><td>2022-03-01T00:02:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96367</td><td>-59.197691002228204</td><td>-68.09637525542499</td><td>0.8704998651217551</td></tr>
+<tr><td>2022-03-01T00:03:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96368</td><td>-59.22890797337511</td><td>-67.97149949453744</td><td>0.8705499257618887</td></tr>
+<tr><td>2022-03-01T00:04:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96369</td><td>-59.25849585088714</td><td>-67.84543905500325</td><td>0.8705999851804567</td></tr>
+</table></div>
+
+
+
 ## TimeSeries Table columns
 
 The first column is always the `time` column and this is imposed by AstroPy.
@@ -349,7 +373,7 @@ quantity_support()
 
 
 
-    <astropy.visualization.units.quantity_support.<locals>.MplQuantityConverter at 0x7fda4413c2e0>
+    <astropy.visualization.units.quantity_support.<locals>.MplQuantityConverter at 0x7f0b6f436140>
 
 
 
@@ -410,7 +434,7 @@ plt.title('stars289 Nerpio 2023/05')
 
 
     
-![png](output_38_1.png)
+![png](output_40_1.png)
     
 
 
@@ -428,7 +452,7 @@ plt.grid()
 
 
     
-![png](output_39_0.png)
+![png](output_41_0.png)
     
 
 
@@ -464,7 +488,7 @@ plt.ylabel('TESS-W NSB')
 
 
     
-![png](output_42_1.png)
+![png](output_44_1.png)
     
 
 
@@ -489,7 +513,7 @@ plt.text(0.01,0.9,'stars289 2023/05 data',ha='left',va='center', transform=ax.tr
 
 
     
-![png](output_43_1.png)
+![png](output_45_1.png)
     
 
 
