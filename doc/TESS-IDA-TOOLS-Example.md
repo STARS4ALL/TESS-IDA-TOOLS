@@ -311,7 +311,6 @@ table.info
                   Sun Alt float64     deg  Quantity
                  Moon Alt float64     deg  Quantity
                Moon Phase float64          Quantity
-                     JDay float64            Column
                Julian Day float64            Column
 
 
@@ -346,6 +345,13 @@ from astropy.visualization import quantity_support
 quantity_support()
 ```
 
+
+
+
+    <astropy.visualization.units.quantity_support.<locals>.MplQuantityConverter at 0x7fda41db49a0>
+
+
+
 We will create another table with only night data based on the Sun altitude. This means creating a mask first and then apply the mask to the table. Since the Sun Altitude column has units (u.deg), we must specity the condition with units too.
 
 
@@ -374,7 +380,6 @@ night_table.info
                   Sun Alt float64     deg  Quantity
                  Moon Alt float64     deg  Quantity
                Moon Phase float64          Quantity
-                     JDay float64            Column
                Julian Day float64            Column
 
 
