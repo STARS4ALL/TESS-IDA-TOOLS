@@ -19,7 +19,7 @@ For each file, if they match, there is no change and we skip the lengthy computa
 
 ## Managing Position.
 
-The pipeline will stop if it detects that there is not known Position during the Sun & Moon data computation.
+The pipeline will stop if it detects that there is not known `Position` during the Sun & Moon data computation.
 If you happen to know an approximated Position for the photometer with enough accuracy for your purpose, you may enter it
 in the database.
 
@@ -37,12 +37,19 @@ tess-ida-db --console coords add --name stars4 --latitude 40.5 --longitude -3.1 
 (.venv)  jupyter$  tess-ida-pipe --console range -n stars4 -s 2024-03 -u 2024-06 -i IDA -o ECSV --fix
 ```
 
+### Listing positions
+
+TBD
+
 ### Modifing position
 
-1. Modify cordinates in the database
+1. Modify coordinates in the database
+
+You may modify any or all coordinates.
 
 ```bash
-tess-ida-db --console coords update --name stars4 --latitude 40.8 --longitude -3.15 --height 690
+tess-ida-db --console coords update --name stars4 --longitude -3.15
+tess-ida-db --console coords update --name stars4 --latitude 40.8 --height 690
 ```
 
 2. ***Delete al related ECSV files !***
