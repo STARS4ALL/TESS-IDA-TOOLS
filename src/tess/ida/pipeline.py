@@ -65,11 +65,11 @@ async def pipe_single(base_url: str, ida_base_dir: OptStr, ecsv_base_dir: OptStr
 
 
 async def pipe_range(base_url: str, ida_base_dir: OptStr, ecsv_base_dir: OptStr, 
-    name: str, since: datetime, until: datetime, skip_download: bool, fix: bool, concurrent: int, timeout:int = 4) -> None:
+    name: str, since: datetime, until: datetime, skip_download: bool, oname: bool, fix: bool, concurrent: int, timeout:int = 4) -> None:
     if not skip_download:
         await download_ida_range(base_url, ida_base_dir, name, since, until, concurrent,  timeout)
     await asyncio.to_thread(to_ecsv_range, ida_base_dir, name, ecsv_base_dir, since, until, fix)
-    await asyncio.to_thread(to_ecsv_combine, ecsv_base_dir,  name, since, until)
+    await asyncio.to_thread(to_ecsv_combine, ecsv_base_dir, name, since, until, oname)
 
 # ================================
 # COMMAND LINE INTERFACE FUNCTIONS
@@ -96,6 +96,7 @@ async def cli_pipe_range(base_url: str, args: Namespace) -> None:
         since = args.since, 
         until = args.until, 
         skip_download = args.skip_download,
+        oname = args.out_filename,
         fix = True if args.fix else False,
         concurrent = args.concurrent
     )
@@ -121,6 +122,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
     parser_range.add_argument('-i', '--in-dir', type=str, default=None, help='IDA download files base directory')
     parser_range.add_argument('-o', '--out-dir', type=str, default=None, help='Output IDA base directory')
     parser_range.add_argument('-sd', '--skip-download', action='store_true', help='Skip download step')
+    parser_range.add_argument('-on', '--out-filename', type=str, default=None, help='Optional output combined file name') 
     parser_range.add_argument('-f', '--fix', action='store_true', help='Fix unknown location')
     parser_range.add_argument('-c', '--concurrent', type=int, metavar='<N>', choices=[1,2,4,6,8], default=4, help='Number of concurrent downloads (defaults to %(default)s)')
     return parser

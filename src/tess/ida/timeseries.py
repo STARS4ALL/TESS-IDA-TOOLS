@@ -267,7 +267,7 @@ def to_ecsv_range(base_dir: OptStr,  name: str, out_dir: str, since: datetime, u
         do_to_ecsv_single(in_path, out_path, fix)
 
 
-def to_ecsv_combine(base_dir: OptStr,  name: str, since: datetime, until: datetime) -> None:
+def to_ecsv_combine(base_dir: OptStr,  name: str, since: datetime, until: datetime, oname: str) -> None:
     in_dir_path = to_phot_dir(base_dir, name)
     months = [m for m in month_range(since, until)]
     log.info("[%s] Combining months into a single ECSV: %s", name, months)
@@ -287,9 +287,11 @@ def to_ecsv_combine(base_dir: OptStr,  name: str, since: datetime, until: dateti
         acc_table = append_table(acc_table, table)
         acc_table.meta['combined'].append(os.path.basename(in_path))
     dirname = os.path.dirname(candidate_path[0])
-    filename = f'since_{months[0]}_until_{months[-1]}.ecsv'
+    filename = f'since_{months[0]}_until_{months[-1]}.ecsv' if not oname else oname
     path = os.path.join(dirname, filename)
-    save_table(acc_table, path)
+    log.info("[%s] Saving combined Time Series to ECSV file: %s", name, path)
+    table.write(path, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
+  
 
 # ================================
 # COMMAND LINE INTERFACE FUNCTIONS
@@ -321,6 +323,7 @@ def cli_to_ecsv_combine(args: Namespace) -> None:
         name = args.name,
         since = args.since,
         until = args.until,
+        oname = args.out_filename,
     )
    
 
@@ -346,7 +349,8 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
     parser_comb.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
     parser_comb.add_argument('-i', '--in-dir', type=vdir, default=None, help='Input ECSV base directory')
     parser_comb.add_argument('-s', '--since',  type=vmonth, default=prev_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
-    parser_comb.add_argument('-u', '--until',  type=vmonth, default=cur_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s') 
+    parser_comb.add_argument('-u', '--until',  type=vmonth, default=cur_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
+    parser_comb.add_argument('-on', '--out-filename', type=str, default=None, help='Optional output combined file name') 
     return parser
 
 
