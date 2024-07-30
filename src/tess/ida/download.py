@@ -28,6 +28,7 @@ from dateutil.relativedelta import relativedelta
 
 from lica.cli import async_execute
 from lica.validators import vmonth, vyear
+from lica.misc import group
 from lica.typing import OptStr
 
 #--------------
@@ -35,7 +36,7 @@ from lica.typing import OptStr
 # -------------
 
 from .. import __version__
-from .utils import cur_month, prev_month, group, month_range, makedirs, name_month
+from .utils import cur_month, prev_month, month_range, makedirs, name_month
 
 # ----------------
 # Module constants

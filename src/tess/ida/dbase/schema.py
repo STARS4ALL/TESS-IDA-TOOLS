@@ -27,6 +27,7 @@ import decouple
 
 from lica.cli import execute
 from lica.validators import vfile, vdir, vmonth
+from lica.tabulate import paging
 
 
 #--------------
@@ -119,7 +120,6 @@ def cli_coords_update(args: Namespace) -> None:
     connection.close()        
     log.info("[%s] Modified coordinates entry", args.name)
     log.warning("[%s] Sun/Moon data no longer valid. Delete your %s ECSV files and re-run the pipeline", args.name, args.name)
-    
 
 
 def cli_coords_delete(args: Namespace) -> None:
@@ -132,6 +132,26 @@ def cli_coords_delete(args: Namespace) -> None:
         log.error(e)   
     connection.close()
     log.info("[%s] Deleted coordinates entry", args.name)
+
+from ..utils import paging
+
+def cli_coords_list(args: Namespace) -> None:
+    dbase_path = decouple.config('DATABASE_FILE')
+    data = (args.name,)
+    try:
+        with sqlite3.connect(dbase_path) as connection:
+            cursor = connection.cursor()
+            if args.name:
+                sql = 'SELECT phot_name, latitude, longitude, height FROM coords_t WHERE phot_name = ?'
+                cursor.execute(sql, data)
+            else:
+                sql = 'SELECT phot_name, latitude, longitude, height FROM coords_t ORDER BY phot_name'
+                cursor.execute(sql)
+            paging(cursor,('NAME', 'LONGITUDE', 'LATITUDE', 'HEIGHT'))
+    except Exception as e:
+        log.error(e)   
+    connection.close()
+    
 
 
 def add_args(parser: ArgumentParser) -> ArgumentParser:
@@ -151,6 +171,8 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
     loc_add.add_argument('-he', '--height', type=float, default=0.0, help='Height above sea level [m] (default: %(default)s)')
     loc_del= subparser.add_parser('delete',  help="Remove coordinates from photometer")
     loc_del.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
+    loc_del= subparser.add_parser('list',  help="List photometer coordinates")
+    loc_del.add_argument('-n', '--name', type=str,  default=None, help='Optional photometer name')
     loc_upd= subparser.add_parser('update',  help="Update coordinates to photometer")
     loc_upd.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
     loc_upd.add_argument('-la', '--latitude', type=float, default=None, help='Latitude [degrees]')
@@ -164,6 +186,7 @@ CMD_TABLE = {
     'coords_add': cli_coords_add,
     'coords_delete': cli_coords_delete,
     'coords_update': cli_coords_update,
+    'coords_list': cli_coords_list,
 }
 
 def cli_schema(args: Namespace) -> None:

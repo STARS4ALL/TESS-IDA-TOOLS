@@ -24,6 +24,7 @@ import decouple
 
 from lica.cli import async_execute
 from lica.validators import vmonth
+from lica.misc import group
 from lica.typing import OptStr
 
 #--------------
@@ -32,7 +33,7 @@ from lica.typing import OptStr
 
 from .. import __version__
 from .dbase import aux_dbase_load, aux_dbase_save
-from .utils import cur_month, prev_month, group, month_range, makedirs
+from .utils import cur_month, prev_month, month_range, makedirs
 from .download import download_ida_single, download_ida_range
 from .timeseries import to_ecsv_single, to_ecsv_range, to_ecsv_combine, NoCoordinatesError
 

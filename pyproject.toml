@@ -36,7 +36,6 @@ dependencies = [
   'aiodns',
   'astropy',
   'astroplan',         # sister project from the astropy project
-  'sortedcontainers',  # fast indexing of astropy tables
   'lica@git+https://github.com/guaix-ucm/lica@main', # own assorted utilities
 ]
 

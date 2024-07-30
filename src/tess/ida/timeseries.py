@@ -184,18 +184,17 @@ def ida_to_table(path: str, fix: bool) -> TimeSeries:
     return table
 
 def add_columns(table: TimeSeries, name: str, month: str) -> None:
-    log.info("[%s] [%s] Adding Sun/Moon data to Time Series", name, month)
     latitude = table.meta['ida'][IKW.POSITION]['latitude']
     longitude = table.meta['ida'][IKW.POSITION]['longitude']
     height = table.meta['ida'][IKW.POSITION]['height']
     obs_name = table.meta['ida'][IKW.OBSERVER]['observer']
     location = EarthLocation(lat=latitude, lon=longitude, height=height)
     observer = Observer(name=obs_name, location=location)
-    log.debug("[%s] [%s] Adding new %s column", name, month, TS.SUN_ALT)
+    log.info("[%s] [%s] Adding new %s column", name, month, TS.SUN_ALT)
     table[TS.SUN_ALT]   = observer.sun_altaz(table['time']).alt.deg * u.deg
-    log.debug("[%s][%s] Adding new %s column", name, month, TS.MOON_ALT)
+    log.info("[%s] [%s] Adding new %s column", name, month, TS.MOON_ALT)
     table[TS.MOON_ALT]   = observer.moon_altaz(table['time']).alt.deg * u.deg
-    log.debug("[%s] [%s] Adding new %s column", name, month, TS.MOON_PHASE)
+    log.info("[%s] [%s] Adding new %s column", name, month, TS.MOON_PHASE)
     table[TS.MOON_PHASE] = observer.moon_phase(table['time']) / (np.pi * u.rad)
   
 
