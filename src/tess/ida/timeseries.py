@@ -269,7 +269,7 @@ def to_ecsv_range(base_dir: OptStr,  name: str, out_dir: str, since: datetime, u
 def to_ecsv_combine(base_dir: OptStr,  name: str, since: datetime, until: datetime, oname: str) -> None:
     in_dir_path = to_phot_dir(base_dir, name)
     months = [m for m in month_range(since, until)]
-    log.info("[%s] Combining months into a single ECSV: %s", name, months)
+    log.info("[%s] Combining %d months from %s to %s into a single ECSV", name, len(months), months[0], months[-1])
     search_path = os.path.join(in_dir_path, 'stars*.ecsv')
     candidate_path = list()
     for path in sorted(glob.iglob(search_path)):
