@@ -171,16 +171,16 @@ def ida_to_table(path: str, fix: bool) -> TimeSeries:
     table[TEW.SKY_TEMP] = table[TEW.SKY_TEMP] * u.deg_C
     if nchannels == 1:
         table[TEW.FREQ] = table[TEW.FREQ] * u.Hz
-        table[TEW.MAG]  = table[TEW.MAG] * u.mag(u.Hz)
+        table[TEW.MAG]  = table[TEW.MAG] * u.mag() / u.arcsec**2
     else:
         table[T4C.FREQ1] = table[T4C.FREQ1] * u.Hz
-        table[T4C.MAG1] = table[T4C.MAG1] * u.mag(u.Hz)
+        table[T4C.MAG1] = table[T4C.MAG1] * u.mag() / u.arcsec**2
         table[T4C.FREQ2] = table[T4C.FREQ2] * u.Hz
-        table[T4C.MAG2] = table[T4C.MAG2] * u.mag(u.Hz)
+        table[T4C.MAG2] = table[T4C.MAG2] * u.mag() / u.arcsec**2
         table[T4C.FREQ3] = table[T4C.FREQ3] * u.Hz
-        table[T4C.MAG3] = table[T4C.MAG3] * u.mag(u.Hz)
+        table[T4C.MAG3] = table[T4C.MAG3] * u.mag() / u.arcsec**2
         table[T4C.FREQ4] = table[T4C.FREQ4] * u.Hz
-        table[T4C.MAG4] = table[T4C.MAG4] * u.mag(u.Hz)
+        table[T4C.MAG4] = table[T4C.MAG4] * u.mag() / u.arcsec**2
     return table
 
 def add_columns(table: TimeSeries, name: str, month: str) -> None:
