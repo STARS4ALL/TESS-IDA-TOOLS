@@ -62,7 +62,7 @@ table.info
           Sequence Number   int64                 Column
                   Sun Alt float64           deg Quantity
                  Moon Alt float64           deg Quantity
-               Moon Phase float64               Quantity
+        Moon Illumination float64                 Column
 
 
 
@@ -77,15 +77,15 @@ table[0:5]
 
 
 <div><i>TimeSeries length=5</i>
-<table id="table140006783348992" class="table-striped table-bordered table-condensed">
-<thead><tr><th>time</th><th>Enclosure Temperature</th><th>Sky Temperature</th><th>Frequency</th><th>MSAS</th><th>ZP</th><th>Sequence Number</th><th>Sun Alt</th><th>Moon Alt</th><th>Moon Phase</th></tr></thead>
+<table id="table139846831524496" class="table-striped table-bordered table-condensed">
+<thead><tr><th>time</th><th>Enclosure Temperature</th><th>Sky Temperature</th><th>Frequency</th><th>MSAS</th><th>ZP</th><th>Sequence Number</th><th>Sun Alt</th><th>Moon Alt</th><th>Moon Illumination</th></tr></thead>
 <thead><tr><th></th><th>deg_C</th><th>deg_C</th><th>Hz</th><th>mag / arcsec2</th><th></th><th></th><th>deg</th><th>deg</th><th></th></tr></thead>
 <thead><tr><th>Time</th><th>float64</th><th>float64</th><th>float64</th><th>float64</th><th>float64</th><th>int64</th><th>float64</th><th>float64</th><th>float64</th></tr></thead>
-<tr><td>2022-03-01T00:00:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.63</td><td>20.45</td><td>96365</td><td>-59.13039024030824</td><td>-68.3424898300323</td><td>0.870399740158756</td></tr>
-<tr><td>2022-03-01T00:01:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96366</td><td>-59.164849992604935</td><td>-68.22004567629244</td><td>0.8704498032546856</td></tr>
-<tr><td>2022-03-01T00:02:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96367</td><td>-59.197691002228204</td><td>-68.09637525542499</td><td>0.8704998651217551</td></tr>
-<tr><td>2022-03-01T00:03:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96368</td><td>-59.22890797337511</td><td>-67.97149949453744</td><td>0.8705499257618887</td></tr>
-<tr><td>2022-03-01T00:04:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96369</td><td>-59.25849585088714</td><td>-67.84543905500325</td><td>0.8705999851804567</td></tr>
+<tr><td>2022-03-01T00:00:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.63</td><td>20.45</td><td>96365</td><td>-59.13039024030824</td><td>-68.3424898300323</td><td>0.04087367578778073</td></tr>
+<tr><td>2022-03-01T00:01:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96366</td><td>-59.164849992604935</td><td>-68.22004567629244</td><td>0.04084254084114358</td></tr>
+<tr><td>2022-03-01T00:02:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96367</td><td>-59.197691002228204</td><td>-68.09637525542499</td><td>0.04081141801620114</td></tr>
+<tr><td>2022-03-01T00:03:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96368</td><td>-59.22890797337511</td><td>-67.97149949453744</td><td>0.040780307311691244</td></tr>
+<tr><td>2022-03-01T00:04:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96369</td><td>-59.25849585088714</td><td>-67.84543905500325</td><td>0.040749208724212616</td></tr>
 </table></div>
 
 
@@ -335,7 +335,7 @@ table.info
           Sequence Number   int64                 Column
                   Sun Alt float64           deg Quantity
                  Moon Alt float64           deg Quantity
-               Moon Phase float64               Quantity
+        Moon Illumination float64                 Column
                Julian Day float64                 Column
 
 
@@ -373,7 +373,7 @@ quantity_support()
 
 
 
-    <astropy.visualization.units.quantity_support.<locals>.MplQuantityConverter at 0x7f55dc894eb0>
+    <astropy.visualization.units.quantity_support.<locals>.MplQuantityConverter at 0x7f30a2fd8790>
 
 
 
@@ -404,7 +404,7 @@ night_table.info
           Sequence Number   int64                 Column
                   Sun Alt float64           deg Quantity
                  Moon Alt float64           deg Quantity
-               Moon Phase float64               Quantity
+        Moon Illumination float64                 Column
                Julian Day float64                 Column
 
 
