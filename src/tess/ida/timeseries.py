@@ -188,14 +188,26 @@ def add_columns(table: TimeSeries, name: str, month: str) -> None:
     longitude = table.meta['ida'][IKW.POSITION]['longitude']
     height = table.meta['ida'][IKW.POSITION]['height']
     obs_name = table.meta['ida'][IKW.OBSERVER]['observer']
+    zenital = table.meta['ida'][IKW.AIM]['zenital'] # Only valid for TESS-W
     location = EarthLocation(lat=latitude, lon=longitude, height=height)
     observer = Observer(name=obs_name, location=location)
     log.info("[%s] [%s] Adding new %s column", name, month, TS.SUN_ALT)
-    table[TS.SUN_ALT]   = observer.sun_altaz(table['time']).alt.deg * u.deg
+    sun_altaz = observer.sun_altaz(table['time'])
+    table[TS.SUN_ALT]   = sun_altaz.alt.deg * u.deg
+    if zenital != 0.0:
+        log.info("[%s] [%s] Adding new %s column", name, month, TS.SUN_AZ)
+        table[TS.SUN_AZ]   = sun_altaz.az.deg * u.deg
     log.info("[%s] [%s] Adding new %s column", name, month, TS.MOON_ALT)
-    table[TS.MOON_ALT]   = observer.moon_altaz(table['time']).alt.deg * u.deg
-    log.info("[%s] [%s] Adding new %s column", name, month, TS.MOON_PHASE)
-    table[TS.MOON_PHASE] = observer.moon_illumination(table['time'])
+    moon_altaz = observer.moon_altaz(table['time'])
+    table[TS.MOON_ALT]   = moon_altaz.alt.deg * u.deg
+    if zenital != 0.0:
+        log.info("[%s] [%s] Adding new %s column", name, month, TS.MOON_AZ)
+        table[TS.MOON_AZ]   = moon_altaz.az.deg * u.deg
+    log.info("[%s] [%s] Adding new %s column", name, month, TS.MOON_ILLUM)
+    table[TS.MOON_ILLUM] = observer.moon_illumination(table['time'])
+   
+       
+
   
 
 def create_table(path: str, fix: bool) -> TimeSeries:

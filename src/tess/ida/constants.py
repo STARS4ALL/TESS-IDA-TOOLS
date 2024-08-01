@@ -86,6 +86,6 @@ class TESS4C_COLS(StringEnum):
 class TIMESERIES_COLS(StringEnum):
     SUN_ALT    = 'Sun Alt'
     SUN_AZ     = 'Sun Az'
-    MOON_AZ    = 'Moon Alt'
+    MOON_AZ    = 'Moon Az'
     MOON_ALT   = 'Moon Alt'
-    MOON_PHASE = 'Moon Phase'
+    MOON_ILLUM = 'Moon Illumination'
