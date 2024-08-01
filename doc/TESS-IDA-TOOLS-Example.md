@@ -3,6 +3,53 @@
 In this example, we are going to process ECSV monthly files from stas289 TESS-W photometer.
 Some examples of basic AstroPy tables usage is shown below.
 
+
+
+## Pre-requistes
+
+### Create a python virtual enviroment and install TESS-IDA-TOOLS alongside jupyter:
+  
+```bash
+~$ mkdir jupyter
+cd jupyter 
+jupyter$ python3 -m venv .venv
+jupyter$ source .venv/bin/activate
+(.venv)  jupyter$ 
+(.venv)  jupyter$ pip install -U pip
+(.venv)  jupyter$ pip install notebook matplotlib
+(.venv)  pip install git+https://github.com/STARS4ALL/TESS-IDA-TOOLS#main
+```
+
+### Configure TESS-IDA-TOOLS
+
+With the help of a text editor, create a new auxiliar environment file called `.env`
+Inside this file, you must add two environment variables:
+
+```text
+IDA_URL=<NextCloud Server IDA base URL>
+DATABASE_FILE=adm/tessida.db
+```
+
+The first one contains the base URL of our NextCloud Server where we publish the IDA files (and you should already have)
+The second one is the path of an auxiliar SQLite database file that help us in the process of download and convert IDA files to ECSV
+
+The example above shows that we will create an `adm` subdirectory inside our working directory `~/jupyter` and a database file named `tessida.db`.
+
+As the final step, we must initialize the database:
+
+```bash
+tess-ida-db --console schema create
+```
+
+### Use TESS-IDA-TOOLS
+
+Download the IDA monthly file `stars289_2022-03.dat` and convert into an ECSV file using our pipleline tool
+
+```bash
+tess-ida-pipe --console single --in-dir IDA --out-dir ECSV --name stars289 --month 2022-03
+```
+
+# Processing the file
 But first, we need to import several packages and objects.
 
 
@@ -77,7 +124,7 @@ table[0:5]
 
 
 <div><i>TimeSeries length=5</i>
-<table id="table139846831524496" class="table-striped table-bordered table-condensed">
+<table id="table140006876213264" class="table-striped table-bordered table-condensed">
 <thead><tr><th>time</th><th>Enclosure Temperature</th><th>Sky Temperature</th><th>Frequency</th><th>MSAS</th><th>ZP</th><th>Sequence Number</th><th>Sun Alt</th><th>Moon Alt</th><th>Moon Illumination</th></tr></thead>
 <thead><tr><th></th><th>deg_C</th><th>deg_C</th><th>Hz</th><th>mag / arcsec2</th><th></th><th></th><th>deg</th><th>deg</th><th></th></tr></thead>
 <thead><tr><th>Time</th><th>float64</th><th>float64</th><th>float64</th><th>float64</th><th>float64</th><th>int64</th><th>float64</th><th>float64</th><th>float64</th></tr></thead>
@@ -373,7 +420,7 @@ quantity_support()
 
 
 
-    <astropy.visualization.units.quantity_support.<locals>.MplQuantityConverter at 0x7f30a2fd8790>
+    <astropy.visualization.units.quantity_support.<locals>.MplQuantityConverter at 0x7f55a8450670>
 
 
 
@@ -434,7 +481,7 @@ plt.title('stars289 Nerpio 2023/05')
 
 
     
-![png](output_40_1.png)
+![png](output_42_1.png)
     
 
 
@@ -452,7 +499,7 @@ plt.grid()
 
 
     
-![png](output_41_0.png)
+![png](output_43_0.png)
     
 
 
@@ -488,7 +535,7 @@ plt.ylabel('TESS-W NSB')
 
 
     
-![png](output_44_1.png)
+![png](output_46_1.png)
     
 
 
@@ -513,7 +560,7 @@ plt.text(0.01,0.9,'stars289 2023/05 data',ha='left',va='center', transform=ax.tr
 
 
     
-![png](output_45_1.png)
+![png](output_47_1.png)
     
 
 
