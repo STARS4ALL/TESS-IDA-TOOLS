@@ -60,9 +60,9 @@ log = logging.getLogger(__name__.split('.')[-1])
 # ===========
 
 async def pipe_single(base_url: str, ida_base_dir: OptStr, ecsv_base_dir: OptStr, 
-    name: str, month: OptStr, exact:OptStr, fix: bool) -> None:
-    await download_ida_single(base_url, ida_base_dir, name, month, exact, fix, timeout = 4)
-    await asyncio.to_thread(to_ecsv_single, ida_base_dir,  name,  month, exact, ecsv_base_dir)
+    name: str, month: OptStr, exact:OptStr, fix: bool, timeout:int = 4) -> None:
+    await download_ida_single(base_url, ida_base_dir, name, month, exact, timeout)
+    await asyncio.to_thread(to_ecsv_single, ida_base_dir,  name,  month, exact, ecsv_base_dir, fix)
 
 
 async def pipe_range(base_url: str, ida_base_dir: OptStr, ecsv_base_dir: OptStr, 

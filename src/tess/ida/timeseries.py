@@ -195,7 +195,7 @@ def add_columns(table: TimeSeries, name: str, month: str) -> None:
     log.info("[%s] [%s] Adding new %s column", name, month, TS.MOON_ALT)
     table[TS.MOON_ALT]   = observer.moon_altaz(table['time']).alt.deg * u.deg
     log.info("[%s] [%s] Adding new %s column", name, month, TS.MOON_PHASE)
-    table[TS.MOON_PHASE] = observer.moon_phase(table['time']) / (np.pi * u.rad)
+    table[TS.MOON_PHASE] = observer.moon_illumination(table['time'])
   
 
 def create_table(path: str, fix: bool) -> TimeSeries:
