@@ -298,7 +298,7 @@ def to_ecsv_combine(base_dir: OptStr,  name: str, since: datetime, until: dateti
         acc_table = append_table(acc_table, table)
         acc_table.meta['combined'].append(os.path.basename(in_path))
     dirname = os.path.dirname(candidate_path[0])
-    filename = f'since_{months[0]}_until_{months[-1]}.ecsv' if not oname else oname
+    filename = f'{name}_{since.strftime("%Y%m")}-{until.strftime("%Y%m")}.ecsv' if not oname else oname
     path = os.path.join(dirname, filename)
     log.info("[%s] Saving combined Time Series to ECSV file: %s", name, path)
     table.write(path, format='ascii.ecsv', delimiter=',', fast_writer=True, overwrite=True)
