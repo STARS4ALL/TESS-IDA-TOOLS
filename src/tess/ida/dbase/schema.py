@@ -133,7 +133,6 @@ def cli_coords_delete(args: Namespace) -> None:
     connection.close()
     log.info("[%s] Deleted coordinates entry", args.name)
 
-from ..utils import paging
 
 def cli_coords_list(args: Namespace) -> None:
     dbase_path = decouple.config('DATABASE_FILE')
