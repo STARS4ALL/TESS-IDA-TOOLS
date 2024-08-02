@@ -193,18 +193,18 @@ def add_columns(table: TimeSeries, name: str, month: str) -> None:
     observer = Observer(name=obs_name, location=location)
     log.info("[%s] [%s] Adding new %s column", name, month, TS.SUN_ALT)
     sun_altaz = observer.sun_altaz(table['time'])
-    table[TS.SUN_ALT]   = sun_altaz.alt.deg * u.deg
+    table[TS.SUN_ALT]   = np.round(sun_altaz.alt.deg,2) * u.deg
     if zenital != 0.0:
         log.info("[%s] [%s] Adding new %s column", name, month, TS.SUN_AZ)
-        table[TS.SUN_AZ]   = sun_altaz.az.deg * u.deg
+        table[TS.SUN_AZ]   = np.round(sun_altaz.az.deg,2) * u.deg
     log.info("[%s] [%s] Adding new %s column", name, month, TS.MOON_ALT)
     moon_altaz = observer.moon_altaz(table['time'])
-    table[TS.MOON_ALT]   = moon_altaz.alt.deg * u.deg
+    table[TS.MOON_ALT]   = np.round(moon_altaz.alt.deg) * u.deg
     if zenital != 0.0:
         log.info("[%s] [%s] Adding new %s column", name, month, TS.MOON_AZ)
-        table[TS.MOON_AZ]   = moon_altaz.az.deg * u.deg
+        table[TS.MOON_AZ]   = np.round(moon_altaz.az.deg, 2) * u.deg
     log.info("[%s] [%s] Adding new %s column", name, month, TS.MOON_ILLUM)
-    table[TS.MOON_ILLUM] = observer.moon_illumination(table['time'])
+    table[TS.MOON_ILLUM] = np.round(observer.moon_illumination(table['time']),3)
    
        
 
