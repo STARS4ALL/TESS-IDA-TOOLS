@@ -31,6 +31,7 @@ dependencies = [
   'StrEnum',           # String Enums for Python < 3.11
   'python-decouple',   # Get info from enviromental variables
   'python-dateutil',   # date utilities
+  'tabulate',          # pretty-print tables
   'aiofiles',          # Asyncio support for file I/O
   'aiohttp',
   'aiodns',
