@@ -3,7 +3,7 @@ requires = ["setuptools >= 45", "wheel", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "get-IDA"
+name = "TESS-IDA-TOOLS"
 dynamic = ["version"]
 description = "Collection of utilities to download and analize TESS Photometer Network data from IDA files"
 readme = "README.md"
