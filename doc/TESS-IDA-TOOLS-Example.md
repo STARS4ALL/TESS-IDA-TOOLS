@@ -1,7 +1,7 @@
 # Astropy ECSV Files processing Tutorial
 
-In this example, we are going to process ECSV monthly files from stas289 TESS-W photometer.
-Some examples of basic AstroPy tables usage is shown below.
+This example processes one ECSV monthly file from stas289 TESS-W photometer and plots some graphics using `Astropy` and `Matplotlib`.
+Basic `AstroPy` tables usage is shown.
 
 
 
@@ -43,7 +43,7 @@ tess-ida-db --console schema create
 
 ### Use TESS-IDA-TOOLS
 
-Download the IDA monthly file `stars289_2022-03.dat` and convert into an ECSV file using our pipleline tool
+Download a single IDA monthly file `stars289_2022-03.dat` and convert into an ECSV file using our pipleline tool
 
 ```bash
 tess-ida-pipe --console single --in-dir IDA --out-dir ECSV --name stars289 --month 2022-03
@@ -66,7 +66,6 @@ from astropy.timeseries import TimeSeries
 # These come ftrom our TESS-IDA-TOOLS package
 from tess.ida.constants import StringEnum, TESSW_COLS as TW, TIMESERIES_COLS as TS, IDA_KEYWORDS as IKW
 
-# FILE_TO_PROCESS = os.path.join('ECSV', 'stars289', 'since_2019-05_until_2023-06.ecsv')
 FILE_TO_PROCESS = os.path.join('ECSV', 'stars289', 'stars289_2022-03.ecsv')
 ```
 
@@ -80,14 +79,14 @@ print(FILE_TO_PROCESS)
 
 We load this file as a TimeSeries AstroPy Table. TimeSeries tables have a special first column named `time` and also have additional methods for processing. See the [AstroPy documentation](https://docs.astropy.org/en/stable/timeseries/index.html) for more details.
 
-Note that the format is always `ascii.ecsv` and the delimiter is always a comma.
+Note that the format is always `'ascii.ecsv'` and the delimiter is always a comma.
 
 
 ```python
 table = TimeSeries.read(FILE_TO_PROCESS, format='ascii.ecsv', delimiter=',')
 ```
 
-We can view the table general structure by typing:
+The table general structure is shown by typing:
 
 
 ```python
@@ -113,7 +112,7 @@ table.info
 
 
 
-Tou can see a selection of the first 5 rows in the table: 
+A selection of the first 5 rows in the table is shown by typing: 
 
 
 ```python
@@ -124,22 +123,22 @@ table[0:5]
 
 
 <div><i>TimeSeries length=5</i>
-<table id="table140006876213264" class="table-striped table-bordered table-condensed">
+<table id="table139853979224096" class="table-striped table-bordered table-condensed">
 <thead><tr><th>time</th><th>Enclosure Temperature</th><th>Sky Temperature</th><th>Frequency</th><th>MSAS</th><th>ZP</th><th>Sequence Number</th><th>Sun Alt</th><th>Moon Alt</th><th>Moon Illumination</th></tr></thead>
 <thead><tr><th></th><th>deg_C</th><th>deg_C</th><th>Hz</th><th>mag / arcsec2</th><th></th><th></th><th>deg</th><th>deg</th><th></th></tr></thead>
 <thead><tr><th>Time</th><th>float64</th><th>float64</th><th>float64</th><th>float64</th><th>float64</th><th>int64</th><th>float64</th><th>float64</th><th>float64</th></tr></thead>
-<tr><td>2022-03-01T00:00:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.63</td><td>20.45</td><td>96365</td><td>-59.13039024030824</td><td>-68.3424898300323</td><td>0.04087367578778073</td></tr>
-<tr><td>2022-03-01T00:01:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96366</td><td>-59.164849992604935</td><td>-68.22004567629244</td><td>0.04084254084114358</td></tr>
-<tr><td>2022-03-01T00:02:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96367</td><td>-59.197691002228204</td><td>-68.09637525542499</td><td>0.04081141801620114</td></tr>
-<tr><td>2022-03-01T00:03:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96368</td><td>-59.22890797337511</td><td>-67.97149949453744</td><td>0.040780307311691244</td></tr>
-<tr><td>2022-03-01T00:04:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96369</td><td>-59.25849585088714</td><td>-67.84543905500325</td><td>0.040749208724212616</td></tr>
+<tr><td>2022-03-01T00:00:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.63</td><td>20.45</td><td>96365</td><td>-59.13</td><td>-68.0</td><td>0.041</td></tr>
+<tr><td>2022-03-01T00:01:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96366</td><td>-59.16</td><td>-68.0</td><td>0.041</td></tr>
+<tr><td>2022-03-01T00:02:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96367</td><td>-59.2</td><td>-68.0</td><td>0.041</td></tr>
+<tr><td>2022-03-01T00:03:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96368</td><td>-59.23</td><td>-68.0</td><td>0.041</td></tr>
+<tr><td>2022-03-01T00:04:14.000</td><td>0.0</td><td>0.0</td><td>0.34</td><td>21.64</td><td>20.45</td><td>96369</td><td>-59.26</td><td>-68.0</td><td>0.041</td></tr>
 </table></div>
 
 
 
 ## TimeSeries Table columns
 
-The first column is always the `time` column and this is imposed by AstroPy.
+The first column is always the `time` column and this is imposed by `AstroPy`.
 
 In the table info displayed above, you can see the actual column names. Note that many of these columns have units attached to them. These columns are denominated Quantities in Astropy and you can see them in the taable structure. Many of them have long names and are difficult to remember and cumbersome to type. The TESS-IDA-TOOLS package has defined these string literals as constants. Notice the `from tess.ida.constants import TESSW_COLS as TW, TIMESERIES_COLS as TS, IDA_KEYWORDS as IKW` import above.
 
@@ -187,7 +186,7 @@ class TIMESERIES_COLS(StringEnum):
     SUN_AZ     = 'Sun Az'
     MOON_AZ    = 'Moon Alt'
     MOON_ALT   = 'Moon Alt'
-    MOON_PHASE = 'Moon Phase'
+    MOON_ILLUM = 'Moon Illumination'
 ```
 
 But you do not have to remeber all this names. The constants are self descriptive
@@ -252,7 +251,7 @@ table[TS.SUN_ALT][0]
 
 
 
-$-59.13039\mathrm{{}^{\circ}}$
+$-59.13\mathrm{{}^{\circ}}$
 
 
 
@@ -359,7 +358,7 @@ $38.165781\mathrm{{}^{\circ}}$
 
 ## Adding columns to the table
 
-Astropy tables are dynamic: We can also add new columns on the. The processing is done for all rows. For instance, to add a Julian Day column to our TimeSeries, we can take advantage the property `jd` on the `time` column (whose type is `Time`):
+Astropy tables are dynamic: We can also add new columns on the fly. The processing is done for all rows in a column. For instance, to add a Julian Day column to our TimeSeries, we can take advantage on the `jd` property of the `time` column (whose type is `Time`):
 
 
 ```python
@@ -387,17 +386,19 @@ table.info
 
 
 
-You can use the column literals as in the 'Julian Day' example above or use your own set of symbolic constants:
+You can use the column literals in your code as in the 'Julian Day' example above or use your own set of symbolic constants under your chosen namespace (`MYC` in the example below):
 
 
 ```python
-class RGF(StringEnum):
+class MYC(StringEnum):
     JDAY = 'Julian Day'
     FOO = 'Foo column'
     BAR = 'Bar Column'
 ```
 
 ## Saving the Time Series table to an ECSV file
+
+To permanently save the processed table with the Julian Date, all you need is:
 
 
 ```python
@@ -420,11 +421,15 @@ quantity_support()
 
 
 
-    <astropy.visualization.units.quantity_support.<locals>.MplQuantityConverter at 0x7f55a8450670>
+    <astropy.visualization.units.quantity_support.<locals>.MplQuantityConverter at 0x7f324ac6d510>
 
 
 
-We will create another table with only night data based on the Sun altitude. This means creating a mask first and then apply the mask to the table. Since the Sun Altitude column has units (u.deg), we must specity the condition with units too.
+We will create another table with only night data based on the Sun altitude. This means:
+1. creating a mask first and
+2. apply the mask to the table.
+  
+Since the Sun Altitude column has units (u.deg), we must specity the condition with units too.
 
 
 ```python
@@ -439,7 +444,7 @@ night_table.info
 
 
 
-    <TimeSeries length=17236>
+    <TimeSeries length=17235>
              name          dtype       unit      class  
     --------------------- ------- ------------- --------
                      time  object                   Time
@@ -460,8 +465,6 @@ We will plot an histogram comparing all the accumulated data from all days and o
 
 
 ```python
-
-
 figure = plt.figure(figsize=(12, 5))
 ax1=figure.add_subplot(111)
 bins = np.arange(13,21,0.2)
@@ -481,13 +484,13 @@ plt.title('stars289 Nerpio 2023/05')
 
 
     
-![png](output_42_1.png)
+![png](output_43_1.png)
     
 
 
 
 ```python
-figure = plt.figure(figsize=(9, 4))
+figure = plt.figure(figsize=(12, 5))
 ax1=figure.add_subplot(111)
 plt.plot(table[TS.SUN_ALT],table[TW.MAG],'bo',ms=1)
 plt.plot(night_table[TS.SUN_ALT],night_table[TW.MAG],'ro',ms=1)
@@ -499,11 +502,13 @@ plt.grid()
 
 
     
-![png](output_43_0.png)
+![png](output_44_0.png)
     
 
 
-#### Mask Moon over horizon
+#### Moon effects on TESS-W readings
+
+Lets see the data on moonless intervals by applying a moonless mask
 
 
 ```python
@@ -514,12 +519,12 @@ moonless_night_table = night_table[moon_mask]
 
 
 ```python
-figure = plt.figure(figsize=(9, 4))
+figure = plt.figure(figsize=(12, 5))
 ax1=figure.add_subplot(111)
 plt.plot(night_table[TS.SUN_ALT],night_table[TW.MAG],'bo',ms=1,label='all data')
 plt.plot(moonless_night_table[TS.SUN_ALT],moonless_night_table[TW.MAG],'ro',ms=1,label='no Moon')
 plt.ylim(14,24)
-plt.xlim(-40,-10)
+plt.xlim(-40,-13)
 plt.legend(ncol=2)
 plt.title('stars289 Nerpio 2023/05')
 plt.xlabel('Sun altitude')
@@ -535,7 +540,7 @@ plt.ylabel('TESS-W NSB')
 
 
     
-![png](output_46_1.png)
+![png](output_47_1.png)
     
 
 
@@ -560,11 +565,6 @@ plt.text(0.01,0.9,'stars289 2023/05 data',ha='left',va='center', transform=ax.tr
 
 
     
-![png](output_47_1.png)
+![png](output_48_1.png)
     
 
-
-
-```python
-
-```
