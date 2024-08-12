@@ -60,13 +60,13 @@ log = logging.getLogger(__name__.split('.')[-1])
 # ===========
 
 async def pipe_single(base_url: str, ida_base_dir: OptStr, ecsv_base_dir: OptStr, 
-    name: str, month: OptStr, exact:OptStr, fix: bool, timeout:int = 4) -> None:
+    name: str, month: OptStr, exact:OptStr, fix: bool, timeout) -> None:
     await download_ida_single(base_url, ida_base_dir, name, month, exact, timeout)
     await asyncio.to_thread(to_ecsv_single, ida_base_dir,  name,  month, exact, ecsv_base_dir, fix)
 
 
 async def pipe_range(base_url: str, ida_base_dir: OptStr, ecsv_base_dir: OptStr, 
-    name: str, since: datetime, until: datetime, skip_download: bool, oname: bool, fix: bool, concurrent: int, timeout:int = 4) -> None:
+    name: str, since: datetime, until: datetime, skip_download: bool, oname: bool, fix: bool, concurrent: int, timeout) -> None:
     if not skip_download:
         await download_ida_range(base_url, ida_base_dir, name, since, until, concurrent,  timeout)
     await asyncio.to_thread(to_ecsv_range, ida_base_dir, name, ecsv_base_dir, since, until, fix)
@@ -85,6 +85,7 @@ async def cli_pipe_single(base_url: str, args: Namespace) -> None:
         month = args.month,
         exact = args.exact,
         fix = True if args.fix else False,
+        timeout = args.timeout,
     )
 
 
@@ -99,7 +100,8 @@ async def cli_pipe_range(base_url: str, args: Namespace) -> None:
         skip_download = args.skip_download,
         oname = args.out_filename,
         fix = True if args.fix else False,
-        concurrent = args.concurrent
+        concurrent = args.concurrent,
+        timeout = args.timeout
     )
 
 
@@ -113,6 +115,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
     parser_single.add_argument('-i', '--in-dir', type=str, default=None, help='IDA download files base directory')
     parser_single.add_argument('-o', '--out-dir', type=str, default=None, help='Output ECSV base directory')
     parser_single.add_argument('-f', '--fix', action='store_true', help='Fix unknown location')
+    parser_single.add_argument('--timeout', type=int, default=300, help='HTTP timeout in seconds (defaults to %(default)s) sec.')
     group1 = parser_single.add_mutually_exclusive_group(required=True)
     group1.add_argument('-e', '--exact', type=str, default=None, help='Specific monthly file name')
     group1.add_argument('-m', '--month',  type=vmonth, default=None, metavar='<YYYY-MM>', help='Year and Month')
@@ -126,6 +129,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
     parser_range.add_argument('-on', '--out-filename', type=str, default=None, help='Optional output combined file name') 
     parser_range.add_argument('-f', '--fix', action='store_true', help='Fix unknown location')
     parser_range.add_argument('-c', '--concurrent', type=int, metavar='<N>', choices=[1,2,4,6,8], default=4, help='Number of concurrent downloads (defaults to %(default)s)')
+    parser_range.add_argument('--timeout', type=int, default=300, help='HTTP timeout in seconds (defaults to %(default)s) sec.')
     return parser
 
 
