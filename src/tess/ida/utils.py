@@ -19,6 +19,7 @@ from datetime import datetime
 # -------------------
 
 from dateutil.relativedelta import relativedelta
+from lica.typing import OptStr
 
 # -------------------
 # Auxiliary functions
@@ -42,7 +43,7 @@ def name_month(ida_file_path: str) -> tuple:
     month = os.path.splitext(os.path.basename(ida_file_path))[0].split('_')[1]
     return name, month
 
-def to_phot_dir(base_dir: str | None, name: str) -> str:
+def to_phot_dir(base_dir: OptStr, name: str) -> str:
     cwd = os.getcwd() 
     base_dir = cwd if base_dir is None else base_dir
     base_dir = os.path.join(cwd, base_dir) if not os.path.isabs(base_dir) else base_dir
@@ -50,12 +51,12 @@ def to_phot_dir(base_dir: str | None, name: str) -> str:
     return full_dir_path
    
 
-def makedirs(base_dir: str | None, name: str) -> str:
+def makedirs(base_dir: OptStr, name: str) -> str:
     full_dir_path = to_phot_dir(base_dir, name)
     os.makedirs(full_dir_path, exist_ok=True)
     return full_dir_path
 
-def v_or_n(value: str) -> str | None:
+def v_or_n(value: str) -> OptStr:
     '''Value or None function'''
     value = value.strip()
     lvalue = value.lower()
