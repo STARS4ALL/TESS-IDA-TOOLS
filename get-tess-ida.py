@@ -5,7 +5,7 @@
 # See the LICENSE file for details
 # ----------------------------------------------------------------------
 
-#-----------------------
+# -----------------------
 # Standard Python imports
 # ----------------------
 
@@ -46,31 +46,39 @@ log = logging.getLogger(__name__.split('.')[-1])
 # Auxiliary functions
 # -------------------
 
+
 def vmonth(datestr: str) -> datetime:
     return datetime.strptime(datestr, '%Y-%m')
 
-def vyear(datestr: str) ->  datetime:
+
+def vyear(datestr: str) -> datetime:
     return datetime.strptime(datestr, '%Y')
 
+
 def cur_month() -> datetime:
-    return datetime.now().replace(day=1,hour=0,minute=0,second=0,microsecond=0)
+    return datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
 
 def prev_month() -> datetime:
-    month = datetime.now().replace(day=1,hour=0,minute=0,second=0,microsecond=0)
+    month = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     return month - relativedelta(months=1)
 
+
 def to_phot_dir(base_dir: str | None, name: str) -> str:
-    cwd = os.getcwd() 
+    cwd = os.getcwd()
     base_dir = cwd if base_dir is None else base_dir
-    base_dir = os.path.join(cwd, base_dir) if not os.path.isabs(base_dir) else base_dir
+    base_dir = os.path.join(cwd, base_dir) if not os.path.isabs(
+        base_dir) else base_dir
     full_dir_path = os.path.join(base_dir, name)
     return full_dir_path
+
 
 def makedirs(base_dir: OptStr, name: str) -> str:
     full_dir_path = to_phot_dir(base_dir, name)
     if not os.path.isdir(full_dir_path):
         os.makedirs(full_dir_path)
     return full_dir_path
+
 
 def name_month(ida_file_path: str) -> tuple:
     name = os.path.basename(os.path.dirname(ida_file_path))
@@ -81,6 +89,7 @@ def name_month(ida_file_path: str) -> tuple:
 # Work functions
 # --------------
 
+
 def do_ida_single_month(base_url: str, ida_base_dir: str, name: str, month: OptStr, exact: OptStr, timeout: int) -> None:
     url = base_url + '/download'
     target_file = name + '_' + month + '.dat' if not exact else exact
@@ -88,10 +97,12 @@ def do_ida_single_month(base_url: str, ida_base_dir: str, name: str, month: OptS
     params = {'path': '/' + name, 'files': target_file}
     resp = requests.get(url, params=params, timeout=timeout)
     if resp.status_code == 404:
-        log.warning("[%s] [%s] No monthly file exits: %s", name, month1, target_file)
+        log.warning("[%s] [%s] No monthly file exits: %s",
+                    name, month1, target_file)
         return
-    resp.raise_for_status() # catch other unexpected return code
-    log.info("[%s] [%s] GET %s [%d OK]", name, month1, resp.url, resp.status_code)
+    resp.raise_for_status()  # catch other unexpected return code
+    log.info("[%s] [%s] GET %s [%d OK]", name,
+             month1, resp.url, resp.status_code)
     contents = resp.text
     full_dir_path = makedirs(ida_base_dir, name)
     file_path = os.path.join(full_dir_path, target_file)
@@ -103,29 +114,29 @@ def do_ida_single_month(base_url: str, ida_base_dir: str, name: str, month: OptS
 # COMMAND LINE INTERFACE FUNCTIONS
 # ================================
 
+
 def cli_ida_single(base_url: str, args: Namespace) -> None:
     month = args.month.strftime('%Y-%m') if not args.exact else None
-    do_ida_single_month( 
-        base_url = base_url, 
-        ida_base_dir = args.out_dir, 
-        name = args.name, 
-        month = month, 
-        exact = args.exact, 
-        timeout = 4
+    do_ida_single_month(
+        base_url=base_url,
+        ida_base_dir=args.out_dir,
+        name=args.name,
+        month=month,
+        exact=args.exact,
+        timeout=4
     )
-
 
 
 def cli_ida_range(base_url: str, args: Namespace) -> None:
     month = args.since
-    while month <=  args.until:
-        do_ida_single_month( 
-            base_url = base_url, 
-            ida_base_dir = args.out_dir, 
-            name = args.name, 
-            month = month.strftime('%Y-%m'), 
-            exact = None, 
-            timeout = 4
+    while month <= args.until:
+        do_ida_single_month(
+            base_url=base_url,
+            ida_base_dir=args.out_dir,
+            name=args.name,
+            month=month.strftime('%Y-%m'),
+            exact=None,
+            timeout=4
         )
         month += relativedelta(months=1)
 
@@ -146,6 +157,7 @@ def cli_ida_photometers(base_url: str, args: Namespace) -> None:
 # LOGGER AND PARSER
 # =================
 
+
 def configure_log(args: Namespace):
     '''Configure the root logger'''
     if args.verbose:
@@ -158,7 +170,8 @@ def configure_log(args: Namespace):
     log = logging.getLogger()
     log.setLevel(level)
     # Log formatter
-    fmt = logging.Formatter('%(asctime)s [%(levelname)s] [%(name)-4s] %(message)s')
+    fmt = logging.Formatter(
+        '%(asctime)s [%(levelname)s] [%(name)-4s] %(message)s')
     # create console handler and set level to debug
     if args.console:
         ch = logging.StreamHandler()
@@ -177,32 +190,52 @@ def configure_log(args: Namespace):
 def args_parser(name: str, version: str, description: str) -> None:
     # create the top-level parser with generic options
     parser = argparse.ArgumentParser(prog=name, description=description)
-    parser.add_argument('--version', action='version', version='{0} {1}'.format(name, version))
-    parser.add_argument('--console', action='store_true', help='Log to vanilla console.')
-    parser.add_argument('--log-file', type=str, metavar="<FILE>", default=None, help='Log to file.')
+    parser.add_argument('--version', action='version',
+                        version='{0} {1}'.format(name, version))
+    parser.add_argument('--console', action='store_true',
+                        help='Log to vanilla console.')
+    parser.add_argument('--log-file', type=str,
+                        metavar="<FILE>", default=None, help='Log to file.')
     group1 = parser.add_mutually_exclusive_group()
-    group1.add_argument('--verbose', action='store_true', help='Verbose output.')
+    group1.add_argument('--verbose', action='store_true',
+                        help='Verbose output.')
     group1.add_argument('--quiet',   action='store_true', help='Quiet output.')
     # Now parse the application specific parts
     subparser = parser.add_subparsers(dest='command')
-    parser_single = subparser.add_parser('single', help='Download single monthly file from a photometer')
-    parser_single.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
-    parser_single.add_argument('-o', '--out-dir', type=str, default=None, help='Output base directory')
+    parser_single = subparser.add_parser(
+        'single', help='Download single monthly file from a photometer')
+    parser_single.add_argument(
+        '-n', '--name', type=str, required=True, help='Photometer name')
+    parser_single.add_argument(
+        '-o', '--out-dir', type=str, default=None, help='Output base directory')
     group1 = parser_single.add_mutually_exclusive_group(required=True)
-    group1.add_argument('-e', '--exact', type=str, default=None, help='Specific monthly file name')
-    group1.add_argument('-m', '--month',  type=vmonth, default=None, metavar='<YYYY-MM>', help='Year and Month')
-    parser_range = subparser.add_parser('range', help='Download a month range from a photometer')
-    parser_range.add_argument('-n', '--name', type=str, required=True, help='Photometer name')
-    parser_range.add_argument('-s', '--since',  type=vmonth, default=prev_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
-    parser_range.add_argument('-u', '--until',  type=vmonth, default=cur_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
-    parser_range.add_argument('-o', '--out-dir', type=str, default=None, help='Output IDA base directory')
-    parser_phot = subparser.add_parser('photometers', help='Download a month range from selected photometers')
+    group1.add_argument('-e', '--exact', type=str,
+                        default=None, help='Specific monthly file name')
+    group1.add_argument('-m', '--month',  type=vmonth,
+                        default=None, metavar='<YYYY-MM>', help='Year and Month')
+    parser_range = subparser.add_parser(
+        'range', help='Download a month range from a photometer')
+    parser_range.add_argument('-n', '--name', type=str,
+                              required=True, help='Photometer name')
+    parser_range.add_argument('-s', '--since',  type=vmonth, default=prev_month(
+    ), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
+    parser_range.add_argument('-u', '--until',  type=vmonth, default=cur_month(
+    ), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
+    parser_range.add_argument(
+        '-o', '--out-dir', type=str, default=None, help='Output IDA base directory')
+    parser_phot = subparser.add_parser(
+        'photometers', help='Download a month range from selected photometers')
     group2 = parser_phot.add_mutually_exclusive_group(required=True)
-    group2.add_argument('-l', '--list', type=int, default=None, nargs='+', metavar='<N>', help='Photometer number list')
-    group2.add_argument('-r', '--range', type=int, default=None, metavar='<N>', nargs=2, help='Photometer number range')
-    parser_phot.add_argument('-s', '--since',  type=vmonth, default=prev_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
-    parser_phot.add_argument('-u', '--until',  type=vmonth, default=cur_month(), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
-    parser_phot.add_argument('-o', '--out-dir', type=str, default=None, help='Output IDA base directory')
+    group2.add_argument('-l', '--list', type=int, default=None,
+                        nargs='+', metavar='<N>', help='Photometer number list')
+    group2.add_argument('-r', '--range', type=int, default=None,
+                        metavar='<N>', nargs=2, help='Photometer number range')
+    parser_phot.add_argument('-s', '--since',  type=vmonth, default=prev_month(
+    ), metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
+    parser_phot.add_argument('-u', '--until',  type=vmonth, default=cur_month(),
+                             metavar='<YYYY-MM>', help='Year and Month (defaults to %(default)s')
+    parser_phot.add_argument('-o', '--out-dir', type=str,
+                             default=None, help='Output IDA base directory')
     return parser
 
 # =============
@@ -220,9 +253,9 @@ CMD_TABLE = {
 def main() -> None:
     '''The main entry point specified by pyproject.toml'''
     parser = args_parser(
-        name = __name__,
-        version = __version__,
-        description = DESCRIPTION
+        name=__name__,
+        version=__version__,
+        description=DESCRIPTION
     )
     args = parser.parse_args(sys.argv[1:])
     configure_log(args)
@@ -233,6 +266,7 @@ def main() -> None:
         log.info("done!")
     except KeyboardInterrupt:
         log.warn("Application quits by user request")
+
 
 if __name__ == '__main__':
     main()
