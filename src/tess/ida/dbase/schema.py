@@ -162,7 +162,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
         'coords', help='Coordinates Table management')
 
     subparser = parser_schema.add_subparsers(dest='subcommand')
-    sch_cre = subparser.add_parser(
+    sch_cre = subparser.add_parser(  # noqa: F841
         'create',  help="Create AstroPy tables and serialize to ECSV files")
 
     subparser = parser_coords.add_subparsers(dest='subcommand')

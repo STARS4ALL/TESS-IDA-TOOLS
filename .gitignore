@@ -164,9 +164,9 @@ cython_debug/
 # =========
 # Own stuff
 # =========
-src/tess/_version.py
+_version.py
 *.ecsv
 *.dat
 *.db
 NOTES
-
+.ruff_cache

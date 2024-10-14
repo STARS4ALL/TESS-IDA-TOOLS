@@ -44,13 +44,12 @@ OptRow = Union[tuple, None]
 log = logging.getLogger(__name__.split('.')[-2])
 
 try:
-    theConnection = None
     theDatabaseFile = decouple.config('DATABASE_FILE')
 
     def aux_dbase_load() -> None:
         global theDatabaseFile
         log.info("Opening auxiliar database from %s", theDatabaseFile)
-        theConnection = sqlite3.connect(theDatabaseFile)
+        _ = sqlite3.connect(theDatabaseFile)
 
     def aux_dbase_save() -> None:
         pass
