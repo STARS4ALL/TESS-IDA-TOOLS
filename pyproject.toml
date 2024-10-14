@@ -3,12 +3,12 @@ requires = ["setuptools >= 45", "wheel", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "TESS-IDA-TOOLS"
+name = "tess-ida-tools"
 dynamic = ["version"]
 description = "Collection of utilities to download and analize TESS Photometer Network data from IDA files"
 readme = "README.md"
 requires-python = ">=3.9"
-license = {text = "MIT"}
+license = {file = "LICENSE"}
 authors = [
     {name = "Rafael González", email = "rafael08@ucm.es"},
     {name = "Jaime Zamorano", email = "jzamorano@fis.ucm.es"},
@@ -18,7 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
@@ -27,22 +27,23 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Atmospheric Science",
 ]
 dependencies = [
-  'typing-extensions', # Self for Python < 3.11
-  'StrEnum',           # String Enums for Python < 3.11
-  'python-decouple',   # Get info from enviromental variables
-  'python-dateutil',   # date utilities
-  'tabulate',          # pretty-print tables
-  'aiofiles',          # Asyncio support for file I/O
+  'typing-extensions',
+  # Self for Python < 3.11
+  'StrEnum',
+  # String Enums for Python < 3.11
+  'python-decouple',
+  # Get info from enviromental variables
+  'python-dateutil',
+  # date utilities
+  'tabulate',
+  # pretty-print tables
+  'aiofiles',
+  # Asyncio support for file I/O
   'aiohttp',
   'aiodns',
   'astropy',
-  'astroplan',         # sister project from the astropy project
-  'lica@git+https://github.com/guaix-ucm/lica@main', # own assorted utilities
-]
-
-[project.optional-dependencies]
-test = [
-    "pytest>=6",
+  'astroplan',
+  "lica",
 ]
 
 [project.urls]
@@ -69,6 +70,14 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "tess.ida.dbase.sql" = ["*.sql",]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.3.3",
+]
+
+[tool.uv.sources]
+lica = { git = "https://github.com/guaix-ucm/lica", tag = "1.0.0" }
 
 [tool.setuptools]
 script-files = []
