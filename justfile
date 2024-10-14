@@ -3,11 +3,13 @@
 # 2. uv add --dev rust-just
 # 3. Use just within the activated environment
 
+
 drive_uuid := "77688511-78c5-4de3-9108-b631ff823ef4"
 user :=  file_stem(home_dir())
+def_drive := join("/media", user, drive_uuid)
 project := file_stem(justfile_dir())
-def_bak_dir :=  join("/media", user, drive_uuid, project)
 local_env := join(justfile_dir(), ".env")
+
 
 # list all recipes
 default:
@@ -44,7 +46,22 @@ lica version="main":
     fi
 
 # Backup .env to storage unit
-envback bak_dir=def_bak_dir:
+envbak drive=def_drive: (check_mnt drive) (envbackup join(drive, project))
+
+# Restore .env from storage unit
+envrst drive=def_drive: (check_mnt drive) (envrestore join(drive, project))
+
+[private]
+check_mnt mnt:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ ! -d  {{ mnt }} ]]; then
+        echo "Drive not mounted: {{ mnt }}"
+        exit 1 
+    fi
+
+[private]
+envbackup bak_dir:
     #!/usr/bin/env bash
     set -euo pipefail
     if [[ ! -f  {{ local_env }} ]]; then
@@ -57,8 +74,8 @@ envback bak_dir=def_bak_dir:
     echo "Copy {{ local_env }} => {{ bak_dir }}"
     cp {{ local_env }} {{ bak_dir }}
 
-# Restore .env from storage unit
-envrest bak_dir=def_bak_dir:
+[private]
+envrestore bak_dir:
     #!/usr/bin/env bash
     set -euo pipefail
     if [[ ! -f  {{ bak_dir }}/.env ]]; then
