@@ -13,9 +13,7 @@ import sys
 import logging
 import sqlite3
 
-from typing import Any, Union
 from argparse import Namespace, ArgumentParser
-from collections.abc import Sequence
 
 from importlib.resources import files
 
@@ -26,7 +24,6 @@ from importlib.resources import files
 import decouple
 
 from lica.cli import execute
-from lica.validators import vfile, vdir, vmonth
 from lica.tabulate import paging
 
 

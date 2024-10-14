@@ -10,7 +10,6 @@
 
 import os
 import hashlib
-import itertools
 
 from datetime import datetime
 

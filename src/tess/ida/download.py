@@ -24,10 +24,9 @@ import decouple
 import aiohttp
 import aiofiles
 
-from dateutil.relativedelta import relativedelta
 
 from lica.cli import async_execute
-from lica.validators import vmonth, vyear
+from lica.validators import vmonth
 from lica.misc import group
 from lica.typing import OptStr
 

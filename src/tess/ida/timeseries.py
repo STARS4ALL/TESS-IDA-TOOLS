@@ -11,12 +11,10 @@
 import os
 import glob
 import logging
-import itertools
 
 from datetime import datetime
 from argparse import Namespace, ArgumentParser
 from typing import Union, Dict, Any
-from collections.abc import Sequence
 
 # -------------------
 # Third party imports
@@ -31,7 +29,7 @@ from astropy.coordinates import EarthLocation
 from astroplan import Observer
 
 from lica.cli import execute
-from lica.validators import vfile, vdir, vmonth
+from lica.validators import vdir, vmonth
 from lica.typing import OptStr
 
 # --------------

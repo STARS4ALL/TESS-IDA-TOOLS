@@ -8,12 +8,10 @@
 # Standard Python imports
 # ----------------------
 
-import os
 import logging
 import sqlite3
 
-from typing import Any, Union, Iterator
-from argparse import Namespace, ArgumentParser
+from typing import Union, Iterator
 from collections.abc import Sequence
 
 
@@ -23,14 +21,12 @@ from collections.abc import Sequence
 
 import decouple
 
-from lica.typing import OptStr
 
 
 # --------------
 # local imports
 # -------------
 
-from ... import __version__
 
 # ----------------
 # Module constants
