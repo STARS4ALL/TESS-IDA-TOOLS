@@ -22,7 +22,6 @@ from collections.abc import Sequence
 import decouple
 
 
-
 # --------------
 # local imports
 # -------------
@@ -41,10 +40,10 @@ OptRow = Union[tuple, None]
 # -----------------------
 
 # get the module logger
-log = logging.getLogger(__name__.split('.')[-2])
+log = logging.getLogger(__name__.split(".")[-2])
 
 try:
-    theDatabaseFile = decouple.config('DATABASE_FILE')
+    theDatabaseFile = decouple.config("DATABASE_FILE")
 
     def aux_dbase_load() -> None:
         global theDatabaseFile
@@ -57,15 +56,15 @@ try:
     def aux_table_hashes_insert(data: Sequence[str, str]) -> None:
         global theDatabaseFile
         with sqlite3.connect(theDatabaseFile) as conn:
-            conn.execute(
-                'INSERT INTO ecsv_t(filename, hash) VALUES(?,?)', data)
+            conn.execute("INSERT INTO ecsv_t(filename, hash) VALUES(?,?)", data)
         conn.close()
 
     def aux_table_hashes_update(data: Sequence[str, str]) -> None:
         global theDatabaseFile
         with sqlite3.connect(theDatabaseFile) as conn:
             conn.execute(
-                'UPDATE ecsv_t SET hash = ? WHERE filename = ?', (data[1], data[0]))
+                "UPDATE ecsv_t SET hash = ? WHERE filename = ?", (data[1], data[0])
+            )
         conn.close()
 
     def aux_table_hashes_lookup(filename: str) -> Iterator[OptRow]:
@@ -73,7 +72,8 @@ try:
         with sqlite3.connect(theDatabaseFile) as conn:
             cursor = conn.cursor()
             cursor.execute(
-                'SELECT filename, hash FROM ecsv_t WHERE filename = ?', (filename,))
+                "SELECT filename, hash FROM ecsv_t WHERE filename = ?", (filename,)
+            )
         yield cursor.fetchone()
         conn.close()
 
@@ -82,18 +82,23 @@ try:
         with sqlite3.connect(theDatabaseFile) as conn:
             cursor = conn.cursor()
         cursor.execute(
-            'SELECT phot_name, latitude, longitude, height FROM coords_t WHERE phot_name = ?', (name,))
+            "SELECT phot_name, latitude, longitude, height FROM coords_t WHERE phot_name = ?",
+            (name,),
+        )
         yield cursor.fetchone()
         conn.close()
 
 except decouple.UndefinedValueError:
+
     def aux_dbase_load() -> None:
         log.warning(
-            "No Auxiliar database was configured. Check 'DATABASE_FILE' environment variable")
+            "No Auxiliar database was configured. Check 'DATABASE_FILE' environment variable"
+        )
 
     def aux_dbase_save() -> None:
         log.warning(
-            "No Auxiliar database was configured. Check 'DATABASE_FILE' environment variable")
+            "No Auxiliar database was configured. Check 'DATABASE_FILE' environment variable"
+        )
 
     def aux_table_hashes_lookup(filename: str) -> Iterator[OptRow]:
         yield None
