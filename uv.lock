@@ -392,11 +392,6 @@ wheels = [
 ]
 
 [[package]]
-name = "lica"
-version = "1.0.0"
-source = { git = "https://github.com/guaix-ucm/lica?tag=1.0.0#74d2311d7715df4113e4c4dfe97c97cfe15c95f2" }
-
-[[package]]
 name = "multidict"
 version = "6.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -843,7 +838,7 @@ wheels = [
 
 [[package]]
 name = "tess-ida-tools"
-version = "0.1.8.dev0+g0f0929c.d20241014"
+version = "0.1.7.dev16+g6011d65.d20241015"
 source = { editable = "." }
 dependencies = [
     { name = "aiodns" },
@@ -851,7 +846,6 @@ dependencies = [
     { name = "aiohttp" },
     { name = "astroplan" },
     { name = "astropy" },
-    { name = "lica" },
     { name = "python-dateutil" },
     { name = "python-decouple" },
     { name = "strenum" },
@@ -871,7 +865,6 @@ requires-dist = [
     { name = "aiohttp" },
     { name = "astroplan" },
     { name = "astropy" },
-    { name = "lica", git = "https://github.com/guaix-ucm/lica?tag=1.0.0" },
     { name = "python-dateutil" },
     { name = "python-decouple" },
     { name = "strenum" },

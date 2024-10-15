@@ -38,9 +38,11 @@ tinstall pkg="tess-ida-tools":
     uv pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ {{pkg}}
 
 # Adds lica source library as dependency. 'version' may be a tag or branch
-lica version="main":
+lica-dev version="main":
     #!/usr/bin/env bash
     set -euo pipefail
+    echo "Removing previous LICA dependency"
+    uv remove lica || echo "Ignoring non existing LICA library";
     if [[ "{{ version }}" =~ [0-9]+\.[0-9]+\.[0-9]+ ]]; then
         echo "Adding LICA source library --tag {{ version }}"; 
         uv add git+https://github.com/guaix-ucm/lica --tag {{ version }};
@@ -49,11 +51,21 @@ lica version="main":
         uv add git+https://github.com/guaix-ucm/lica --branch {{ version }};
     fi
 
+# Adds lica release library as dependency with a given version
+lica-rel version="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Removing previous LICA dependency"
+    uv remove lica || echo "Ignoring non existing LICA library";
+    echo "Adding LICA library {{ version }}";
+    uv add lica {{ version }};
+
+
 # Backup .env to storage unit
-envbak drive=def_drive: (check_mnt drive) (envbackup join(drive, project))
+env-bak drive=def_drive: (check_mnt drive) (env-backup join(drive, project))
 
 # Restore .env from storage unit
-envrst drive=def_drive: (check_mnt drive) (envrestore join(drive, project))
+env-rst drive=def_drive: (check_mnt drive) (env-restore join(drive, project))
 
 [private]
 check_mnt mnt:
@@ -65,7 +77,7 @@ check_mnt mnt:
     fi
 
 [private]
-envbackup bak_dir:
+env-backup bak_dir:
     #!/usr/bin/env bash
     set -euo pipefail
     if [[ ! -f  {{ local_env }} ]]; then
@@ -79,7 +91,7 @@ envbackup bak_dir:
     cp {{ local_env }} {{ bak_dir }}
 
 [private]
-envrestore bak_dir:
+env-restore bak_dir:
     #!/usr/bin/env bash
     set -euo pipefail
     if [[ ! -f  {{ bak_dir }}/.env ]]; then
