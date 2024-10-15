@@ -1,7 +1,3 @@
-[build-system]
-requires = ["setuptools >= 45", "wheel", "setuptools_scm[toml]>=6.2"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "tess-ida-tools"
 dynamic = ["version"]
@@ -55,6 +51,10 @@ tess-ida-get = "tess.ida.download:main"
 tess-ida-ecsv = "tess.ida.timeseries:main"
 tess-ida-pipe = "tess.ida.pipeline:main"
 tess-ida-db = "tess.ida.dbase.schema:main"
+
+[build-system]
+requires = ["setuptools >= 45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
 
 # pyproject.toml
 # Automatically generates a _version-py file from with Git information
