@@ -29,7 +29,7 @@ from lica.typing import OptStr
 # local imports
 # -------------
 
-from .. import __version__
+from . import __version__
 from .dbase import aux_dbase_load, aux_dbase_save
 from .utils import cur_month, prev_month
 from .download import download_ida_single, download_ida_range

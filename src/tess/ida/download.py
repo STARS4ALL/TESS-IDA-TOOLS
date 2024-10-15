@@ -34,7 +34,7 @@ from lica.typing import OptStr
 # local imports
 # -------------
 
-from .. import __version__
+from . import __version__
 from .utils import cur_month, prev_month, month_range, makedirs, name_month
 
 # ----------------

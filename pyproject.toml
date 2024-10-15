@@ -60,7 +60,7 @@ tess-ida-db = "tess.ida.dbase.schema:main"
 # Automatically generates a _version-py file from with Git information
 # This file shold be placed in .gitignore
 [tool.setuptools_scm]
-write_to = "src/tess/_version.py"
+write_to = "src/tess/ida/_version.py"
 
 [tool.setuptools.packages.find]
 # scanning for namespace packages is true by default in pyproject.toml, so
