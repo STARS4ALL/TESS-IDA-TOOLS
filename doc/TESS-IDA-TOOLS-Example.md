@@ -15,9 +15,7 @@ cd jupyter
 jupyter$ python3 -m venv .venv
 jupyter$ source .venv/bin/activate
 (.venv)  jupyter$ 
-(.venv)  jupyter$ pip install -U pip
-(.venv)  jupyter$ pip install notebook matplotlib
-(.venv)  pip install git+https://github.com/STARS4ALL/TESS-IDA-TOOLS#main
+(.venv)  jupyter$ pip install notebook matplotlib tess-ida-tools
 ```
 
 ### Configure TESS-IDA-TOOLS
