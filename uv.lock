@@ -393,14 +393,14 @@ wheels = [
 
 [[package]]
 name = "lica"
-version = "1.0.0"
+version = "1.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "python-decouple" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e3/1d/c7b262615480ccfb2172503468ceeba80c6aaa96ab779303bd20131accec/lica-1.0.0.tar.gz", hash = "sha256:43fb5fae6dfd73535af4ae6eeded2f1a5f2f187d56dacbf3c6ae99cf23f38673", size = 50691 }
+sdist = { url = "https://files.pythonhosted.org/packages/b1/c7/92c24bdc8ef2dbbd3a39e052e70ddf70c70d9236a25d6a932c1ae4bb71dc/lica-1.0.1.tar.gz", hash = "sha256:51bde991bc457a9b1a47cfeaa9f2e22e1d8bcce90a64e647ae98121c65c42512", size = 50708 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/17/63/19bc3625cca2e9e1310ddad820e74a63a385eb4cd8d88d0a9522bef2c762/lica-1.0.0-py3-none-any.whl", hash = "sha256:5348ffefc2b528e221dad6b64e37005043c196c86acb90ce8c2e7e3fce754b0b", size = 34614 },
+    { url = "https://files.pythonhosted.org/packages/64/66/13ed81769df7fc5f8d6237823619d7b81450b889f8b6727423d8feaba277/lica-1.0.1-py3-none-any.whl", hash = "sha256:5ac05052405b53e6120264ad503293a4b0c79b7d6facfd0c1c36480d2217c6f0", size = 34618 },
 ]
 
 [[package]]
@@ -850,7 +850,7 @@ wheels = [
 
 [[package]]
 name = "tess-ida-tools"
-version = "0.1.7.dev23+ge5bd3f3.d20241016"
+version = "0.1.9.dev1+g090f8e0.d20241016"
 source = { editable = "." }
 dependencies = [
     { name = "aiodns" },
