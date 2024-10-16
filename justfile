@@ -33,6 +33,11 @@ build:
 publish: build
     twine upload -r pypi dist/*
 
+# test installed version from PyPi server
+install pkg="tess-ida-tools":
+    uv run --with {{pkg}} \
+        --no-project -- python -c "from tess.ida import __version__; print(__version__)"
+
 # Publish the package in Test PyPi
 test-publish: build
     twine upload --verbose -r testpypi dist/*
@@ -42,11 +47,6 @@ test-install pkg="tess-ida-tools":
     uv run --with {{pkg}} \
         --index-url https://test.pypi.org/simple/ \
         --extra-index-url https://pypi.org/simple/ \
-        --no-project -- python -c "from tess.ida import __version__; print(__version__)"
-
-# test installed version from PyPi server
-install pkg="tess-ida-tools":
-    uv run --with {{pkg}} \
         --no-project -- python -c "from tess.ida import __version__; print(__version__)"
 
 # Adds lica source library as dependency. 'version' may be a tag or branch
