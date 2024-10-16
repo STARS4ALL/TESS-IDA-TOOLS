@@ -25,12 +25,12 @@ dev:
     uv add --dev pytest
 
 # Build the package
-build: lica-rel
+build:
     rm -fr dist/*
     uv build
 
 # Publish the package in PyPi
-publish:build
+publish: build
     twine upload -r pypi dist/*
 
 # Publish the package in Test PyPi
