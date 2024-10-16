@@ -44,6 +44,11 @@ test-install pkg="tess-ida-tools":
         --extra-index-url https://pypi.org/simple/ \
         --no-project -- python -c "from tess.ida import __version__; print(__version__)"
 
+# test installed version from PyPi server
+install pkg="tess-ida-tools":
+    uv run --with {{pkg}} \
+        --no-project -- python -c "from tess.ida import __version__; print(__version__)"
+
 # Adds lica source library as dependency. 'version' may be a tag or branch
 lica-dev version="main":
     #!/usr/bin/env bash
