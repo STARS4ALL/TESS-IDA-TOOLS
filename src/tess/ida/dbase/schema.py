@@ -15,8 +15,6 @@ import sqlite3
 
 from argparse import Namespace, ArgumentParser
 
-from importlib.resources import files
-
 # -------------------
 # Third party imports
 # -------------------
@@ -31,7 +29,7 @@ from lica.tabulate import paging
 # local imports
 # -------------
 
-from ... import __version__
+from .. import __version__
 
 _SQL_PKG = "tess.ida.dbase.sql"
 _SQL_RES = "schema.sql"
@@ -43,7 +41,7 @@ if sys.version_info[1] < 11:
 
     SCHEMA_SQL_TEXT = resource_bytes(_SQL_PKG, _SQL_RES).decode("utf-8")
 else:
-    from importlib_resources import files
+    from importlib.resources import files
 
     SCHEMA_SQL_TEXT = files(_SQL_PKG).joinpath(_SQL_RES).read_text()
 

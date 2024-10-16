@@ -107,14 +107,16 @@ will show available options for each command. The generic options always come *b
 Example:
 
 ```bash
-tess-ida-get --console --quiet photometers --list stars1 stars703 stars328 --since 2024-03 --until 2024-07
+tess-ida-get --console --quiet photometers --list 1 703 328 --since 2024-03 --until 2024-07
 ```
 
-Many commands include `-s|--since` and `-u|--until` options. 
-If not specified, the default values are the previos month and current month respectively.
+The command above download range of files for photometers  stars1 stars703 and stars328.
 
-Many commands include `-i|--input-dir` and `-o|output-dir` options.
-If not specified, the default value is the current working directory.
+Many commands include `-s | --since` and `-u | --until` options. 
+If not specified, the default values are the previous month and current month respectively.
+
+Many commands include `-i | --input-dir` and `-o | output-dir` options.
+If not specified, the default value is the current working directory, like in the example above.
 
 ## Simple usage example
 
