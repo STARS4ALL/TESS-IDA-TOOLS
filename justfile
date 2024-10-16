@@ -30,15 +30,15 @@ build:
     uv build
 
 # Publish the package in PyPi
-publish: build
-    twine upload --verbose -r pypi dist/*
+publish: lica-rel build
+    twine upload -r pypi dist/*
 
 # Publish the package in Test PyPi
-test-publish: build
-    twine upload --verbose -r testpypi dist/*
+test-publish: lica-rel build
+    twine upload -r testpypi dist/*
 
 # test installed version from Test PyPi server
-test-install pkg="tess-ida-tools": lica-rel test-publish
+test-install pkg="tess-ida-tools": test-publish
     uv run --with {{pkg}} --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ \
         --no-project -- python -c "import {{pkg}}" install 
 

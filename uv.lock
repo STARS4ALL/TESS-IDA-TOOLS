@@ -392,6 +392,18 @@ wheels = [
 ]
 
 [[package]]
+name = "lica"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "python-decouple" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e3/1d/c7b262615480ccfb2172503468ceeba80c6aaa96ab779303bd20131accec/lica-1.0.0.tar.gz", hash = "sha256:43fb5fae6dfd73535af4ae6eeded2f1a5f2f187d56dacbf3c6ae99cf23f38673", size = 50691 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/17/63/19bc3625cca2e9e1310ddad820e74a63a385eb4cd8d88d0a9522bef2c762/lica-1.0.0-py3-none-any.whl", hash = "sha256:5348ffefc2b528e221dad6b64e37005043c196c86acb90ce8c2e7e3fce754b0b", size = 34614 },
+]
+
+[[package]]
 name = "multidict"
 version = "6.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -838,7 +850,7 @@ wheels = [
 
 [[package]]
 name = "tess-ida-tools"
-version = "0.1.7.dev16+g6011d65.d20241015"
+version = "0.1.7.dev19+gd10251c.d20241016"
 source = { editable = "." }
 dependencies = [
     { name = "aiodns" },
@@ -846,6 +858,7 @@ dependencies = [
     { name = "aiohttp" },
     { name = "astroplan" },
     { name = "astropy" },
+    { name = "lica" },
     { name = "python-dateutil" },
     { name = "python-decouple" },
     { name = "strenum" },
@@ -865,6 +878,7 @@ requires-dist = [
     { name = "aiohttp" },
     { name = "astroplan" },
     { name = "astropy" },
+    { name = "lica" },
     { name = "python-dateutil" },
     { name = "python-decouple" },
     { name = "strenum" },

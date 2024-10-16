@@ -39,6 +39,7 @@ dependencies = [
   'aiodns',
   'astropy',
   'astroplan',
+  "lica>=1.0.0",
 ]
 
 [project.urls]
