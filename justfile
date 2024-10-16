@@ -29,21 +29,15 @@ build:
     rm -fr dist/*
     uv build
 
-# Publish the package in PyPi
-publish: build
+# Publish the package to PyPi
+publish pkg="tess-ida-tools": build
     twine upload -r pypi dist/*
+    uv run --no-project --with {{pkg}} --refresh-package {{pkg}} \
+        -- python -c "from tess.ida  import __version__; print(__version__)"
 
-# test installed version from PyPi server
-install pkg="tess-ida-tools":
-    uv run  --no-project --with {{pkg}} --refresh-package {{pkg}} \
-        -- python -c "from tess.ida import __version__; print(__version__)"
-
-# Publish the package in Test PyPi
-test-publish: build
+# Publish to Test PyPi server
+test-publish pkg="tess-ida-tools": build
     twine upload --verbose -r testpypi dist/*
-
-# test installed version from Test PyPi server
-test-install pkg="tess-ida-tools":
     uv run --no-project  --with {{pkg}} --refresh-package {{pkg}} \
         --index-url https://test.pypi.org/simple/ \
         --extra-index-url https://pypi.org/simple/ \
