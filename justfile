@@ -29,13 +29,18 @@ build:
     rm -fr dist/*
     uv build
 
-# Publish the package in (pypi|testpypi)
-publish repo="pypi" : build
-    twine upload --verbose -r {{ repo }} dist/*
+# Publish the package in PyPi
+publish: build
+    twine upload --verbose -r pypi dist/*
 
-# install version from Test PyPi server
-tinstall pkg="tess-ida-tools":
-    uv pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ {{pkg}}
+# Publish the package in Test PyPi
+test-publish: build
+    twine upload --verbose -r testpypi dist/*
+
+# test installed version from Test PyPi server
+test-install pkg="lica": test-publish
+    uv run --with {{pkg}} --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ \
+        --no-project -- python -c "import {{pkg}}" install 
 
 # Adds lica source library as dependency. 'version' may be a tag or branch
 lica-dev version="main":
