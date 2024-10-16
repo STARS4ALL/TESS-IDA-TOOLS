@@ -129,7 +129,7 @@ In your jupyter working directory, with the activated virtual environment, type:
 ```
 
 The above utility `tess-ida-pipe` is the complete pipeline that:
-1. Downloads IDA monthly files for stars289 since 2019-05 until 2023-06, placing them under `IDA/stars289` subdirectory.
+1. Downloads a range of IDA monthly files for stars289 since 2019-05 until 2023-06, placing them under `IDA/stars289` subdirectory.
 2. Transforms them to ECSV files under `ECSV/stars289`.
 3. Merges them into a combined time series file named `ECSV/stars289/since_2019-05_until_2023-06.ecsv`
 
