@@ -850,7 +850,7 @@ wheels = [
 
 [[package]]
 name = "tess-ida-tools"
-version = "0.1.8.dev0+gb160877.d20241016"
+version = "0.1.8.dev0+gf496859.d20241016"
 source = { editable = "." }
 dependencies = [
     { name = "aiodns" },

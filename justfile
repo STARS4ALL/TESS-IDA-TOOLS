@@ -35,7 +35,7 @@ publish:build
 
 # Publish the package in Test PyPi
 test-publish: build
-    twine upload -r testpypi dist/*
+    twine upload --verbose -r testpypi dist/*
 
 # test installed version from Test PyPi server
 test-install pkg="tess-ida-tools": test-publish
