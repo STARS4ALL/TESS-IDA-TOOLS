@@ -10,6 +10,8 @@ def_drive := join("/media", user, drive_uuid)
 project := file_stem(justfile_dir())
 local_env := join(justfile_dir(), ".env")
 
+pkg := "tess-ida-tools"
+module := "tess.ida"
 
 # list all recipes
 default:
@@ -30,18 +32,22 @@ build:
     uv build
 
 # Publish the package to PyPi
-publish pkg="tess-ida-tools": build
+publish: build
     twine upload -r pypi dist/*
     uv run --no-project --with {{pkg}} --refresh-package {{pkg}} \
-        -- python -c "from tess.ida  import __version__; print(__version__)"
+        -- python -c "from {{module}} import __version__; print(__version__)"
 
 # Publish to Test PyPi server
-test-publish pkg="tess-ida-tools": build
+test-publish: build
     twine upload --verbose -r testpypi dist/*
     uv run --no-project  --with {{pkg}} --refresh-package {{pkg}} \
         --index-url https://test.pypi.org/simple/ \
         --extra-index-url https://pypi.org/simple/ \
-        -- python -c "from tess.ida import __version__; print(__version__)"
+        -- python -c "from {{module}} import __version__; print(__version__)"
+
+# ---------------------------
+# LICA Library handling stuff
+# ---------------------------
 
 # Adds lica source library as dependency. 'version' may be a tag or branch
 lica-dev version="main":
