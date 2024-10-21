@@ -6,7 +6,7 @@
 
 drive_uuid := "77688511-78c5-4de3-9108-b631ff823ef4"
 user :=  file_stem(home_dir())
-def_drive := join("/media", user, drive_uuid)
+def_drive := join("/media", user, drive_uuid, "env")
 project := file_stem(justfile_dir())
 local_env := join(justfile_dir(), ".env")
 
