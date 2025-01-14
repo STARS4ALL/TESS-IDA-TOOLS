@@ -64,8 +64,7 @@ def makedirs(base_dir: OptStr, name: str) -> str:
 def v_or_n(value: str) -> OptStr:
     """Value or None function"""
     value = value.strip()
-    lvalue = value.lower()
-    return None if lvalue in ["none", "unknown", ""] else value
+    return None if value.lower() in ["none", "unknown", ""] else value
 
 
 def hash_func(file_path: str) -> str:

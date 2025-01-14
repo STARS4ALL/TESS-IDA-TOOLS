@@ -401,7 +401,7 @@ def to_ecsv_combine(
     )
     path = os.path.join(dirname, filename)
     log.info("[%s] Saving combined Time Series to ECSV file: %s", name, path)
-    table.write(
+    acc_table.write(
         path, format="ascii.ecsv", delimiter=",", fast_writer=True, overwrite=True
     )
 
