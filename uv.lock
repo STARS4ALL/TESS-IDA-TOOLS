@@ -850,7 +850,7 @@ wheels = [
 
 [[package]]
 name = "tess-ida-tools"
-version = "0.1.9.dev1+g090f8e0.d20241016"
+version = "1.0.2.dev3+g2795a67"
 source = { editable = "." }
 dependencies = [
     { name = "aiodns" },
@@ -878,7 +878,7 @@ requires-dist = [
     { name = "aiohttp" },
     { name = "astroplan" },
     { name = "astropy" },
-    { name = "lica" },
+    { name = "lica", specifier = ">=1.0.1" },
     { name = "python-dateutil" },
     { name = "python-decouple" },
     { name = "strenum" },

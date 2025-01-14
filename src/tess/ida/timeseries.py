@@ -130,7 +130,6 @@ class NoCoordinatesError(Exception):
 # Auxiliary functions
 # -------------------
 
-
 # =============
 # Work Routines
 # =============
@@ -200,7 +199,7 @@ def ida_metadata(path: str, fix: bool) -> Dict[str, Any]:
     header[IKW.NUM_COLS] = int(header[IKW.NUM_COLS])
     if header[IKW.NUM_CHANNELS] == 1:
         assert header[IKW.NUM_COLS] == 8
-        header[IKW.ZP] = float(header[IKW.ZP])
+        header[IKW.ZP] = float(header[IKW.ZP].split("(")[0]) # get rid of possible comments on the right of (
         az, zen = header[IKW.AIM][1:-1].split(",")
         header[IKW.AIM] = {"azimuth": float(az), "zenital": float(zen)}
     else:
