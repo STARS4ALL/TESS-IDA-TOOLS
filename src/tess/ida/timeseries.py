@@ -165,7 +165,7 @@ def ida_metadata(path: str, fix: bool) -> Dict[str, Any]:
         header[IKW.POSITION] = {
             "latitude": float(v_or_n(latitude)),
             "longitude": float(v_or_n(longitude)),
-            "height": float(v_or_n(height)),
+            "height": float(v_or_n(height)) if v_or_n(height) else 0.0,
         }
     except TypeError:
         if not fix:

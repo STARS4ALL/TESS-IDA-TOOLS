@@ -65,7 +65,7 @@ def v_or_n(value: str) -> OptStr:
     """Value or None function"""
     value = value.strip()
     lvalue = value.lower()
-    return None if lvalue == "none" or lvalue == "unknown" or lvalue == "" else value
+    return None if lvalue in ["none", "unknown", ""] else value
 
 
 def hash_func(file_path: str) -> str:
