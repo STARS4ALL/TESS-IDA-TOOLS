@@ -53,9 +53,7 @@ from .constants import (
     IDA_KEYWORDS as IKW,
     IDA_HEADER_LEN,
 )
-from .utils import (
-    cur_month,
-    prev_month,
+from .utils.utils import (
     to_phot_dir,
     makedirs,
     v_or_n,
@@ -63,6 +61,8 @@ from .utils import (
     name_month,
     hash_func,
 )
+
+from .utils import parser as prs
 
 # ----------------
 # Module constants
@@ -443,24 +443,15 @@ def cli_to_ecsv_combine(args: Namespace) -> None:
     )
 
 
-def add_args(parser: ArgumentParser) -> ArgumentParser:
+def add_args(parser: ArgumentParser) -> None:
     # Now parse the application specific parts
     subparser = parser.add_subparsers(dest="command")
     parser_single = subparser.add_parser(
-        "single", help="Convert to ECSV a single monthly file from a photometer"
+        "single", 
+        parents=[prs.name(), prs.inout_dirs(), prs.fix() ],
+        help="Convert to ECSV a single monthly file from a photometer"
     )
-    parser_single.add_argument(
-        "-n", "--name", type=str, required=True, help="Photometer name"
-    )
-    parser_single.add_argument(
-        "-i", "--in-dir", type=vdir, default=None, help="Input IDA base directory"
-    )
-    parser_single.add_argument(
-        "-o", "--out-dir", type=str, default=None, help="Output ECSV base directory"
-    )
-    parser_single.add_argument(
-        "-f", "--fix", action="store_true", help="Fix unknown location"
-    )
+    parser_single.set_defaults(func=cli_to_ecsv_single)
     group1 = parser_single.add_mutually_exclusive_group(required=True)
     group1.add_argument(
         "-e", "--exact", type=str, default=None, help="Specific monthly file name"
@@ -473,85 +464,29 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
         metavar="<YYYY-MM>",
         help="Year and Month",
     )
+
     parser_range = subparser.add_parser(
-        "range", help="Convert to ECSV a range of IDA monthly files from a photometer"
+        "range", 
+        parents=[prs.name(), prs.inout_dirs(), prs.mon_range(),  prs.fix()],
+        help="Convert to ECSV a range of IDA monthly files from a photometer"
     )
-    parser_range.add_argument(
-        "-n", "--name", type=str, required=True, help="Photometer name"
-    )
-    parser_range.add_argument(
-        "-i", "--in-dir", type=vdir, default=None, help="Input IDA base directory"
-    )
-    parser_range.add_argument(
-        "-o", "--out-dir", type=str, default=None, help="Output ECSV base directory"
-    )
-    parser_range.add_argument(
-        "-s",
-        "--since",
-        type=vmonth,
-        default=prev_month(),
-        metavar="<YYYY-MM>",
-        help="Year and Month (defaults to %(default)s",
-    )
-    parser_range.add_argument(
-        "-u",
-        "--until",
-        type=vmonth,
-        default=cur_month(),
-        metavar="<YYYY-MM>",
-        help="Year and Month (defaults to %(default)s",
-    )
-    parser_range.add_argument(
-        "-f", "--fix", action="store_true", help="Fix unknown location"
-    )
+    parser_range.set_defaults(func=cli_to_ecsv_range)
+   
     parser_comb = subparser.add_parser(
-        "combine", help="Combines a range of monthly ECSV files into a simnle ECSV"
+        "combine", 
+        parents=[prs.name(), prs.mon_range(), prs.inout_file("ECSV", "combined")],
+        help="Combines a range of monthly ECSV files into a simnle ECSV"
     )
-    parser_comb.add_argument(
-        "-n", "--name", type=str, required=True, help="Photometer name"
-    )
-    parser_comb.add_argument(
-        "-i", "--in-dir", type=vdir, default=None, help="Input ECSV base directory"
-    )
-    parser_comb.add_argument(
-        "-s",
-        "--since",
-        type=vmonth,
-        default=prev_month(),
-        metavar="<YYYY-MM>",
-        help="Year and Month (defaults to %(default)s",
-    )
-    parser_comb.add_argument(
-        "-u",
-        "--until",
-        type=vmonth,
-        default=cur_month(),
-        metavar="<YYYY-MM>",
-        help="Year and Month (defaults to %(default)s",
-    )
-    parser_comb.add_argument(
-        "-on",
-        "--out-filename",
-        type=str,
-        default=None,
-        help="Optional output combined file name",
-    )
-    return parser
+    parser_comb.set_defaults(func=cli_to_ecsv_combine)
 
 
-CMD_TABLE = {
-    "single": cli_to_ecsv_single,
-    "range": cli_to_ecsv_range,
-    "combine": cli_to_ecsv_combine,
-}
 
 
 def cli_to_ecsv(args: Namespace) -> None:
     """The main entry point specified by pyprojectable.toml"""
-    func = CMD_TABLE[args.command]
     aux_dbase_load()
     try:
-        func(args)
+        args.func(args)
     except NoCoordinatesError:
         pass
     aux_dbase_save()

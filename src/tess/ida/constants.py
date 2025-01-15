@@ -7,11 +7,8 @@
 # ------------------------
 # Standard Python imports
 # -----------------------
-try:
-    from enum import StrEnum  # from Python 3.11 on
-except:
-    from strenum import StrEnum
 
+from lica import StrEnum
 
 # -------------------------
 # Constant and Enumerations

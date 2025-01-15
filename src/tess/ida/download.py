@@ -35,7 +35,8 @@ from lica.typing import OptStr
 # -------------
 
 from . import __version__
-from .utils import cur_month, prev_month, month_range, makedirs, name_month
+from .utils import parser as prs
+from .utils.utils import month_range, makedirs, name_month
 
 # ----------------
 # Module constants
@@ -163,9 +164,9 @@ async def ida_photometers(
 # ================================
 
 
-async def cli_ida_single(base_url: str, args: Namespace) -> None:
+async def cli_ida_single(args: Namespace) -> None:
     await download_ida_single(
-        base_url=base_url,
+        base_url=args.base_url,
         ida_base_dir=args.out_dir,
         name=args.name,
         month=args.month,
@@ -174,9 +175,9 @@ async def cli_ida_single(base_url: str, args: Namespace) -> None:
     )
 
 
-async def cli_ida_range(base_url: str, args: Namespace) -> None:
+async def cli_ida_range(args: Namespace) -> None:
     await download_ida_range(
-        base_url=base_url,
+        base_url=args.base_url,
         ida_base_dir=args.out_dir,
         name=args.name,
         since=args.since,
@@ -186,9 +187,9 @@ async def cli_ida_range(base_url: str, args: Namespace) -> None:
     )
 
 
-async def cli_ida_photometers(base_url: str, args: Namespace) -> None:
+async def cli_ida_photometers(args: Namespace) -> None:
     await ida_photometers(
-        base_url=base_url,
+        base_url=args.base_url,
         ida_base_dir=args.out_dir,
         seq=args.list,
         rang=args.range,
@@ -203,143 +204,30 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
     # Now parse the application specific parts
     subparser = parser.add_subparsers(dest="command")
     parser_single = subparser.add_parser(
-        "single", help="Download single monthly file from a photometer"
+        "single",
+        parents=[prs.name(), prs.out_dir("IDA"), prs.mon_single(), prs.timeout()],
+        help="Download single monthly file from a photometer",
     )
-    parser_single.add_argument(
-        "-n", "--name", type=str, required=True, help="Photometer name"
-    )
-    parser_single.add_argument(
-        "-o", "--out-dir", type=str, default=None, help="Output base directory"
-    )
-    parser_single.add_argument(
-        "--timeout",
-        type=int,
-        default=300,
-        help="HTTP timeout in seconds (defaults to %(default)s) sec.",
-    )
-    group1 = parser_single.add_mutually_exclusive_group(required=True)
-    group1.add_argument(
-        "-e", "--exact", type=str, default=None, help="Specific monthly file name"
-    )
-    group1.add_argument(
-        "-m",
-        "--month",
-        type=vmonth,
-        default=None,
-        metavar="<YYYY-MM>",
-        help="Year and Month",
-    )
+    parser_single.set_defaults(func=cli_ida_single)
     parser_range = subparser.add_parser(
-        "range", help="Download a month range from a photometer"
+        "range",
+        parents=[prs.name(), prs.out_dir("IDA"), prs.mon_range(), prs.concurrent()],
+        help="Download a month range from a photometer",
     )
-    parser_range.add_argument(
-        "-n", "--name", type=str, required=True, help="Photometer name"
+    parser_range.set_defaults(func=cli_ida_range)
+    parser_phots = subparser.add_parser(
+        "photometers",
+        parents=[prs.phot_range(), prs.out_dir("IDA"), prs.mon_range(), prs.concurrent()],
+        help="Download a month range for selected photometers",
     )
-    parser_range.add_argument(
-        "-s",
-        "--since",
-        type=vmonth,
-        default=prev_month(),
-        metavar="<YYYY-MM>",
-        help="Year and Month (defaults to %(default)s",
-    )
-    parser_range.add_argument(
-        "-u",
-        "--until",
-        type=vmonth,
-        default=cur_month(),
-        metavar="<YYYY-MM>",
-        help="Year and Month (defaults to %(default)s",
-    )
-    parser_range.add_argument(
-        "-o", "--out-dir", type=str, default=None, help="Output IDA base directory"
-    )
-    parser_range.add_argument(
-        "-c",
-        "--concurrent",
-        type=int,
-        metavar="<N>",
-        choices=[1, 2, 4, 6, 8],
-        default=4,
-        help="Number of concurrent downloads (defaults to %(default)s)",
-    )
-    parser_range.add_argument(
-        "--timeout",
-        type=int,
-        default=300,
-        help="HTTP timeout in seconds (defaults to %(default)s) sec.",
-    )
-    parser_phot = subparser.add_parser(
-        "photometers", help="Download a month range for selected photometers"
-    )
-    group2 = parser_phot.add_mutually_exclusive_group(required=True)
-    group2.add_argument(
-        "-l",
-        "--list",
-        type=int,
-        default=None,
-        nargs="+",
-        metavar="<N>",
-        help="Photometer number list",
-    )
-    group2.add_argument(
-        "-r",
-        "--range",
-        type=int,
-        default=None,
-        metavar="<N>",
-        nargs=2,
-        help="Photometer number range",
-    )
-    parser_phot.add_argument(
-        "-s",
-        "--since",
-        type=vmonth,
-        default=prev_month(),
-        metavar="<YYYY-MM>",
-        help="Year and Month (defaults to %(default)s",
-    )
-    parser_phot.add_argument(
-        "-u",
-        "--until",
-        type=vmonth,
-        default=cur_month(),
-        metavar="<YYYY-MM>",
-        help="Year and Month (defaults to %(default)s",
-    )
-    parser_phot.add_argument(
-        "-o", "--out-dir", type=str, default=None, help="Output IDA base directory"
-    )
-    parser_phot.add_argument(
-        "-c",
-        "--concurrent",
-        type=int,
-        metavar="<N>",
-        choices=[1, 2, 3, 4],
-        default=4,
-        help="Number of concurrent downloads (defaults to %(default)s)",
-    )
-    parser_phot.add_argument(
-        "--timeout",
-        type=int,
-        default=300,
-        help="HTTP timeout in seconds (defaults to %(default)s) sec.",
-    )
+    parser_phots.set_defaults(func=cli_ida_photometers)
     return parser
-
-
-CMD_TABLE = {
-    "single": cli_ida_single,
-    "range": cli_ida_range,
-    "photometers": cli_ida_photometers,
-}
 
 
 async def cli_get_ida(args: Namespace) -> None:
     """The main entry point specified by pyproject.toml"""
-    base_url = decouple.config("IDA_URL")
-    func = CMD_TABLE[args.command]
-    await func(base_url, args)
+    args.base_url = decouple.config("IDA_URL")
+    await args.func(args)
     log.info("done!")
 
 
