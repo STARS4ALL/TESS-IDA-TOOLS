@@ -29,7 +29,7 @@ from astropy.coordinates import EarthLocation
 from astroplan import Observer
 
 from lica.cli import execute
-from lica.validators import vdir, vmonth
+from lica.validators import vmonth
 from lica.typing import OptStr
 
 # --------------
@@ -38,7 +38,7 @@ from lica.typing import OptStr
 
 from . import __version__
 from .dbase import (
-    aux_dbase_load, 
+    aux_dbase_load,
     aux_dbase_save,
     aux_table_hashes_lookup,
     aux_table_hashes_insert,
@@ -199,7 +199,9 @@ def ida_metadata(path: str, fix: bool) -> Dict[str, Any]:
     header[IKW.NUM_COLS] = int(header[IKW.NUM_COLS])
     if header[IKW.NUM_CHANNELS] == 1:
         assert header[IKW.NUM_COLS] == 8
-        header[IKW.ZP] = float(header[IKW.ZP].split("(")[0]) # get rid of possible comments on the right of (
+        header[IKW.ZP] = float(
+            header[IKW.ZP].split("(")[0]
+        )  # get rid of possible comments on the right of (
         az, zen = header[IKW.AIM][1:-1].split(",")
         header[IKW.AIM] = {"azimuth": float(az), "zenital": float(zen)}
     else:
@@ -395,7 +397,7 @@ def to_ecsv_combine(
         acc_table.meta["combined"].append(os.path.basename(in_path))
     dirname = os.path.dirname(candidate_path[0])
     filename = (
-        f'{name}_{since.strftime("%Y%m")}-{until.strftime("%Y%m")}.ecsv'
+        f"{name}_{since.strftime('%Y%m')}-{until.strftime('%Y%m')}.ecsv"
         if not oname
         else oname
     )
@@ -447,39 +449,30 @@ def add_args(parser: ArgumentParser) -> None:
     # Now parse the application specific parts
     subparser = parser.add_subparsers(dest="command")
     parser_single = subparser.add_parser(
-        "single", 
-        parents=[prs.name(), prs.inout_dirs(), prs.fix() ],
-        help="Convert to ECSV a single monthly file from a photometer"
+        "single",
+        parents=[
+            prs.name(),
+            prs.mon_single(),
+            prs.inout_dirs("IDA", "ECSV"),
+            prs.fix(),
+        ],
+        help="Convert to ECSV a single monthly file from a photometer",
     )
     parser_single.set_defaults(func=cli_to_ecsv_single)
-    group1 = parser_single.add_mutually_exclusive_group(required=True)
-    group1.add_argument(
-        "-e", "--exact", type=str, default=None, help="Specific monthly file name"
-    )
-    group1.add_argument(
-        "-m",
-        "--month",
-        type=vmonth,
-        default=None,
-        metavar="<YYYY-MM>",
-        help="Year and Month",
-    )
 
     parser_range = subparser.add_parser(
-        "range", 
-        parents=[prs.name(), prs.inout_dirs(), prs.mon_range(),  prs.fix()],
-        help="Convert to ECSV a range of IDA monthly files from a photometer"
+        "range",
+        parents=[prs.name(), prs.mon_range(), prs.inout_dirs("IDA", "ECSV"), prs.fix()],
+        help="Convert to ECSV a range of IDA monthly files from a photometer",
     )
     parser_range.set_defaults(func=cli_to_ecsv_range)
-   
+
     parser_comb = subparser.add_parser(
-        "combine", 
+        "combine",
         parents=[prs.name(), prs.mon_range(), prs.inout_file("ECSV", "combined")],
-        help="Combines a range of monthly ECSV files into a simnle ECSV"
+        help="Combines a range of monthly ECSV files into a single ECSV",
     )
     parser_comb.set_defaults(func=cli_to_ecsv_combine)
-
-
 
 
 def cli_to_ecsv(args: Namespace) -> None:

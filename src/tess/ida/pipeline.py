@@ -142,6 +142,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
         "single",
         parents=[
             prs.name(),
+            prs.out_dir("ECSV"),
             prs.inout_file("IDA", "combined ECSV"),
             prs.mon_single(),
             prs.timeout(),
@@ -155,6 +156,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
         "range",
         parents=[
             prs.name(),
+            prs.out_dir("ECSV"),
             prs.inout_file("IDA", "combined ECSV"),
             prs.mon_range(),
             prs.concurrent(),

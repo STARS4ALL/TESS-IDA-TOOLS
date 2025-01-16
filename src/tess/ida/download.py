@@ -26,7 +26,6 @@ import aiofiles
 
 
 from lica.cli import async_execute
-from lica.validators import vmonth
 from lica.misc import group
 from lica.typing import OptStr
 
