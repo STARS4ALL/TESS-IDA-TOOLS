@@ -14,6 +14,7 @@ import logging
 
 from datetime import datetime
 from argparse import Namespace, ArgumentParser
+from typing import Sequence
 
 # -------------------
 # Third party imports
@@ -31,7 +32,12 @@ from lica.typing import OptStr
 from . import __version__
 from .utils import parser as prs
 from .dbase import aux_dbase_load, aux_dbase_save
-from .download import download_ida_single, download_ida_range
+from .download import (
+    download_ida_single, 
+    download_ida_range, 
+    ida_names_by_seq_or_range, 
+    ida_names_by_location
+)
 from .timeseries import (
     to_ecsv_single,
     to_ecsv_range,
@@ -70,7 +76,7 @@ async def pipe_single(
     month: OptStr,
     exact: OptStr,
     fix: bool,
-    timeout,
+    timeout: int,
 ) -> None:
     await download_ida_single(base_url, ida_base_dir, name, month, exact, timeout)
     await asyncio.to_thread(
@@ -86,10 +92,10 @@ async def pipe_range(
     since: datetime,
     until: datetime,
     skip_download: bool,
-    oname: bool,
+    oname: str,
     fix: bool,
     concurrent: int,
-    timeout,
+    timeout: int,
 ) -> None:
     if not skip_download:
         await download_ida_range(
@@ -101,10 +107,64 @@ async def pipe_range(
     await asyncio.to_thread(to_ecsv_combine, ecsv_base_dir, name, since, until, oname)
 
 
+async def pipe_photometers(
+    base_url: str,
+    ida_base_dir: OptStr,
+    ecsv_base_dir: OptStr,
+    rang: Sequence[int],
+    seq: Sequence[int],
+    since: datetime,
+    until: datetime,
+    skip_download: bool,
+    oname: str,
+    fix: bool,
+    concurrent: int,
+    timeout: int,
+) -> None:
+    names = ida_names_by_seq_or_range(seq, rang)
+    if not skip_download:
+        for name in names:
+            await download_ida_range(base_url, ida_base_dir, name, since, until, concurrent, timeout)
+    for name in names:
+        await asyncio.to_thread(
+            to_ecsv_range, ida_base_dir, name, ecsv_base_dir, since, until, fix
+        )
+        await asyncio.to_thread(
+            to_ecsv_combine, ecsv_base_dir, name, since, until, oname
+        )
+
+async def pipe_location(
+    base_url: str,
+    ida_base_dir: OptStr,
+    ecsv_base_dir: OptStr,
+    lon: float,
+    lat: float,
+    radius: float,
+    since: datetime,
+    until: datetime,
+    skip_download: bool,
+    oname: str,
+    fix: bool,
+    concurrent: int,
+    timeout: int,
+) -> None:
+    names = await ida_names_by_location(
+        base_url, ida_base_dir, lon, lat, radius, timeout
+    )
+    if not skip_download:
+        for name in names:
+            await download_ida_range(base_url, ida_base_dir, name, since, until, concurrent, timeout)
+    for name in names:
+        await asyncio.to_thread(
+            to_ecsv_range, ida_base_dir, name, ecsv_base_dir, since, until, fix
+        )
+        await asyncio.to_thread(
+            to_ecsv_combine, ecsv_base_dir, name, since, until, oname
+        )
+
 # ================================
 # COMMAND LINE INTERFACE FUNCTIONS
 # ================================
-
 
 async def cli_pipe_single(args: Namespace) -> None:
     await pipe_single(
@@ -135,6 +195,41 @@ async def cli_pipe_range(args: Namespace) -> None:
     )
 
 
+async def cli_pipe_photometers(args: Namespace) -> None:
+    await pipe_photometers(
+        base_url=args.base_url,
+        ida_base_dir=args.in_dir,
+        ecsv_base_dir=args.out_dir,
+        seq=args.list,
+        rang=args.range,
+        since=args.since,
+        until=args.until,
+        skip_download=args.skip_download,
+        oname=args.out_filename,
+        fix=True if args.fix else False,
+        concurrent=args.concurrent,
+        timeout=args.timeout,
+    )
+
+
+async def cli_pipe_location(args: Namespace) -> None:
+    await pipe_location(
+        base_url=args.base_url,
+        ida_base_dir=args.in_dir,
+        ecsv_base_dir=args.out_dir,
+        lon=args.longitude,
+        lat=args.latitude,
+        radius=args.radius,
+        since=args.since,
+        until=args.until,
+        skip_download=args.skip_download,
+        oname=args.out_filename,
+        fix=True if args.fix else False,
+        concurrent=args.concurrent,
+        timeout=args.timeout,
+    )
+
+
 def add_args(parser: ArgumentParser) -> ArgumentParser:
     # Now parse the application specific parts
     subparser = parser.add_subparsers(dest="command")
@@ -148,10 +243,9 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
             prs.timeout(),
             prs.fix(),
         ],
-        help="Download single monthly file from a photometer",
+        help="Process single monthly file from a photometer",
     )
     parser_single.set_defaults(func=cli_pipe_single)
-
     parser_range = subparser.add_parser(
         "range",
         parents=[
@@ -161,13 +255,39 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
             prs.mon_range(),
             prs.concurrent(),
             prs.fix(),
+            prs.skip(),
         ],
-        help="Download a month range from a photometer",
-    )
-    parser_range.add_argument(
-        "-sd", "--skip-download", action="store_true", help="Skip download step"
+        help="Process a month range from a photometer",
     )
     parser_range.set_defaults(func=cli_pipe_range)
+    parser_phots = subparser.add_parser(
+        "photometers",
+        parents=[
+            prs.phot_range(),
+            prs.out_dir("ECSV"),
+            prs.inout_file("IDA", "combined ECSV"),
+            prs.mon_range(),
+            prs.concurrent(),
+            prs.fix(),
+            prs.skip(),
+        ],
+        help="Download a month range for selected photometers",
+    )
+    parser_phots.set_defaults(func=cli_pipe_photometers)
+    parser_location = subparser.add_parser(
+        "near",
+        parents=[
+            prs.location(),
+            prs.out_dir("ECSV"),
+            prs.inout_file("IDA", "combined ECSV"),
+            prs.mon_range(),
+            prs.concurrent(),
+            prs.fix(),
+            prs.skip(),
+        ],
+        help="Process a month range from photometers near a given location",
+    )
+    parser_location.set_defaults(func=cli_pipe_location)
     return parser
 
 
@@ -187,7 +307,7 @@ def main() -> None:
     async_execute(
         main_func=cli_pipeline,
         add_args_func=add_args,
-        name=__name__,
+        name="tess-ida-pipe",
         version=__version__,
         description=DESCRIPTION,
     )

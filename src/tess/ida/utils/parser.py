@@ -18,7 +18,7 @@ from argparse import ArgumentParser
 # ---------------------
 
 from dateutil.relativedelta import relativedelta
-from lica.validators import vmonth, vdir
+from lica.validators import vmonth, vdir, vfloat
 
 
 # ------------------------
@@ -51,6 +51,12 @@ def fix() -> ArgumentParser:
     parser.add_argument("-f", "--fix", action="store_true", help="Fix unknown location")
     return parser
 
+def skip() -> ArgumentParser:
+    parser = ArgumentParser(add_help=False)
+    parser.add_argument(
+        "-sd", "--skip-download", action="store_true", help="Skip download step"
+    )
+    return parser
 
 def timeout() -> ArgumentParser:
     parser = ArgumentParser(add_help=False)
@@ -116,7 +122,7 @@ def concurrent() -> ArgumentParser:
         "--timeout",
         type=int,
         default=300,
-        help="HTTP timeout in seconds (defaults to %(default)s) sec.",
+        help="HTTP timeout in seconds (defaults to %(default)s sec.)",
     )
     return parser
 
@@ -146,7 +152,7 @@ def mon_range() -> ArgumentParser:
         type=vmonth,
         default=prev_month(),
         metavar="<YYYY-MM>",
-        help="Year and Month (defaults to %(default)s",
+        help="Year and Month (defaults to %(default)s)",
     )
     parser.add_argument(
         "-u",
@@ -154,7 +160,7 @@ def mon_range() -> ArgumentParser:
         type=vmonth,
         default=cur_month(),
         metavar="<YYYY-MM>",
-        help="Year and Month (defaults to %(default)s",
+        help="Year and Month (defaults to %(default)s)",
     )
     return parser
 
@@ -179,5 +185,33 @@ def phot_range() -> ArgumentParser:
         metavar="<N>",
         nargs=2,
         help="Photometer number range",
+    )
+    return parser
+
+def location() -> ArgumentParser:
+    parser = ArgumentParser(add_help=False)
+    parser.add_argument(
+        "-lo",
+        "--longitude",
+        type=vfloat,
+        required=True,
+        metavar="<LON>",
+        help="Longitude (decimal degrees)",
+    )
+    parser.add_argument(
+        "-la",
+        "--latitude",
+        type=vfloat,
+        required=True,
+        metavar="<LAT>",
+        help="Latitude (decimal degrees)",
+    )
+    parser.add_argument(
+        "-ra",
+        "--radius",
+        type=vfloat,
+        default=10,
+        metavar="<R>",
+        help="Search radius (Km) (defaults to %(default)s Km)",
     )
     return parser

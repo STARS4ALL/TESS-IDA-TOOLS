@@ -9,12 +9,16 @@
 # ----------------------
 
 import os
+import io
+import csv
+import math
 import asyncio
 import logging
-
+import functools
 
 from datetime import datetime
 from argparse import Namespace, ArgumentParser
+from typing import Dict, Tuple, Sequence, Optional, Any
 
 # -------------------
 # Third party imports
@@ -55,6 +59,71 @@ log = logging.getLogger(__name__.split(".")[-1])
 # -------------------
 
 
+def distance(
+    coords_A: Tuple[float, float], coords_B: Tuple[float, float]
+) -> Optional[float]:
+    """
+    Compute approximate geographical distance (arc) [meters] between two points on Earth
+    Coods_A and Coords_B are tuples (longitude, latitude)
+    Accurate for small distances only
+    """
+    EARTH_RADIUS = 6371009.0  # in meters
+
+    long_A = coords_A[0]
+    long_B = coords_B[0]
+    lat_A = coords_A[1]
+    lat_B = coords_B[1]
+    try:
+        delta_long = math.radians(long_A - long_B)
+        delta_lat = math.radians(lat_A - lat_B)
+        mean_lat = math.radians((lat_A + lat_B) / 2)
+        result = round(
+            EARTH_RADIUS
+            * math.sqrt(delta_lat**2 + (math.cos(mean_lat) * delta_long) ** 2),
+            0,
+        )
+    except TypeError:
+        log.error("Algo malo pasṕ")
+        result = None
+    return result
+
+
+def filter_by_distance(
+    longitude: float, latitude: float, radius: float, item: Dict[str, Sequence[int]]
+) -> bool:
+    d = distance((item["longitude"], item["latitude"]), (longitude, latitude))
+    return True if d <= radius else False
+
+
+def float_coords(item: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Converts coordinates in items read by CSV reader into floating values
+    """
+    item["longitude"] = float(item["longitude"])
+    item["latitude"] = float(item["latitude"])
+    return item
+
+
+async def do_get_location_list(base_url: str, ida_base_dir: str, timeout: int) -> Sequence:
+    target_file = "geolist.csv"
+    url = base_url + "/download"
+    params = {"path": "/", "files": target_file}
+    result = []
+    timeout = aiohttp.ClientTimeout(total=timeout)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with session.get(url, params=params) as resp:
+            if resp.status == 404:
+                log.warn("No such file exits: %s", target_file)
+                return result
+            log.info("[%s] GET %s [%d OK]", target_file, resp.url, resp.status)
+            contents = await resp.text()
+            with io.StringIO(contents) as fd:
+                # reader = csv.reader(fd, delimiter=';')
+                reader = csv.DictReader(fd, delimiter=";")
+                result = list(map(float_coords, reader))
+    return result
+
+
 async def do_ida_single(
     session, base_url: str, ida_base_dir: str, name: str, month: OptStr, exact: OptStr
 ) -> None:
@@ -93,10 +162,31 @@ async def do_ida_range(
         ]
         await asyncio.gather(*tasks)
 
-
 # ===========
 # Generic API
 # ===========
+
+
+async def ida_names_by_location(
+    base_url: str,
+    ida_base_dir: str,
+    lon: float,
+    lat: float,
+    radius: float,
+    timeout: int,
+) -> Tuple[str]:
+    by_distance = functools.partial(filter_by_distance, lon, lat, 1000 * radius)
+    result = await do_get_location_list(base_url, ida_base_dir, timeout)
+    return tuple(item["name"] for item in filter(by_distance, result))
+
+
+def ida_names_by_seq_or_range(seq: Sequence[int], rang: Sequence[int]) -> Tuple[str]:
+    if seq is not None:
+        result = tuple("stars" + str(i) for i in sorted(seq))
+    else:
+        rang = sorted(rang)
+        result = tuple("stars" + str(i) for i in range(rang[0], rang[1] + 1))
+    return result
 
 
 async def download_ida_single(
@@ -133,29 +223,33 @@ async def download_ida_range(
 async def ida_photometers(
     base_url: str,
     ida_base_dir: str,
-    rang: list[int],
-    seq: list[int],
+    rang: Sequence[int],
+    seq: Sequence[int],
     since: datetime,
     until: datetime,
     concurrent: int,
     timeout: int,
 ) -> None:
-    timeout = aiohttp.ClientTimeout(total=timeout)
-    async with aiohttp.ClientSession(timeout=timeout) as session:
-        rang = sorted(rang) if rang is not None else None
-        seq = sorted(seq) if seq is not None else None
-        if rang:
-            for i in range(rang[0], rang[1] + 1):
-                name = "stars" + str(i)
-                await do_ida_range(
-                    session, base_url, ida_base_dir, name, since, until, concurrent
-                )
-        else:
-            for i in seq:
-                name = "stars" + str(i)
-                await do_ida_range(
-                    session, base_url, ida_base_dir, name, since, until, concurrent
-                )
+    for name in ida_names_by_seq_or_range(seq, rang):
+        await download_ida_range(base_url, ida_base_dir, name, since, until, concurrent, timeout)
+
+
+async def ida_location(
+    base_url: str,
+    ida_base_dir: str,
+    lon: float,
+    lat: float,
+    radius: float,
+    since: datetime,
+    until: datetime,
+    concurrent: int,
+    timeout: int,
+) -> None:
+    names = await ida_names_by_location(
+        base_url, ida_base_dir, lon, lat, radius, timeout
+    )
+    for name in names:
+        await download_ida_range(base_url, ida_base_dir, name, since, until, concurrent, timeout)
 
 
 # ================================
@@ -199,6 +293,20 @@ async def cli_ida_photometers(args: Namespace) -> None:
     )
 
 
+async def cli_ida_location(args: Namespace) -> None:
+    await ida_location(
+        base_url=args.base_url,
+        ida_base_dir=args.out_dir,
+        lon=args.longitude,
+        lat=args.latitude,
+        radius=args.radius,
+        since=args.since,
+        until=args.until,
+        concurrent=args.concurrent,
+        timeout=args.timeout,
+    )
+
+
 def add_args(parser: ArgumentParser) -> ArgumentParser:
     # Now parse the application specific parts
     subparser = parser.add_subparsers(dest="command")
@@ -216,10 +324,21 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
     parser_range.set_defaults(func=cli_ida_range)
     parser_phots = subparser.add_parser(
         "photometers",
-        parents=[prs.phot_range(), prs.out_dir("IDA"), prs.mon_range(), prs.concurrent()],
+        parents=[
+            prs.phot_range(),
+            prs.out_dir("IDA"),
+            prs.mon_range(),
+            prs.concurrent(),
+        ],
         help="Download a month range for selected photometers",
     )
     parser_phots.set_defaults(func=cli_ida_photometers)
+    parser_location = subparser.add_parser(
+        "near",
+        parents=[prs.location(), prs.out_dir("IDA"), prs.mon_range(), prs.concurrent()],
+        help="Download a month range from photometers near a given location",
+    )
+    parser_location.set_defaults(func=cli_ida_location)
     return parser
 
 
@@ -234,7 +353,7 @@ def main() -> None:
     async_execute(
         main_func=cli_get_ida,
         add_args_func=add_args,
-        name=__name__,
+        name="tess-ida-get",
         version=__version__,
         description=DESCRIPTION,
     )

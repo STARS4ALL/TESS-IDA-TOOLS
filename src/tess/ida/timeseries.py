@@ -29,7 +29,6 @@ from astropy.coordinates import EarthLocation
 from astroplan import Observer
 
 from lica.cli import execute
-from lica.validators import vmonth
 from lica.typing import OptStr
 
 # --------------
@@ -490,7 +489,7 @@ def main() -> None:
     execute(
         main_func=cli_to_ecsv,
         add_args_func=add_args,
-        name=__name__,
+        name="tess-ida-ecsv",
         version=__version__,
         description=DESCRIPTION,
     )
