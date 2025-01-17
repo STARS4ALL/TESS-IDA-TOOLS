@@ -1,24 +1,99 @@
 # TESS-IDA-TOOLS
 
-Collection of utilities to download and analyze TESS Photometer Network data from IDA files.
+Collection of CLI scripts to download and analyze TESS Photometer Network data from IDA files.
 
 *If all that you need is simply to download IDA monthly files from our NextCloud Server, our
 simple [get-tess-ida.py](doc/get-tess-ida.md) script is all that you need. Read no further.*
 
-## Summary
+* [Introduction](#introduction).
 * [Installation and configuration](#installation-and-configuration).
 * [Available utilities](#available-utilities).
-* [Usage example](#simple-usage-example).
+* [Usage examples](#usage-examples).
 * [The IDA monthly files](#tess-ida-monthly-files).
 * [The auxiliar database](#the-auxiliar-database)
+
+## Introduction
+
+TESS-IDA-TOOLS is a small pipeline that can be executed as a whole (`tess-ida-pipe`) or by stages. The stages are:
+* `tess-ida-get`. Download one or several IDA files from publised server by some selected criteria.
+* `tess-ida-ecsv`. Converts one or more IDA files to a single, cnombined ECSV file.
+
+There is also CLI utility (`tess-ida-db`) to fix location metadata justr in case the IDA files have not incorporated these metadata in the header. 
+
+The scripts support generic options and comman-specific options
+
+All scripts support the following ***generic options***:
+* `--help | -h`. Prints command help and quits.
+* `--version`. Prints software version and quits.
+* `--console`. Prints execution info on the terminal console (up to level INFO)
+* `--log-file`. Appends the same execution info to a log file
+* `--quiet`. Suppresses all messages except CRITICAL, ERROR and WARNING.
+* `--verbose`. Includes DEBUG level messages.
+
+Many commands include `-s | --since` and `-u | --until` options. If not specified, the default values are the previous month and current month respectively.
+
+Many commands include `-i | --input-dir` and `-o | output-dir` options. If not specified, the default value is the current working directory, like in the example above.
+
+The `--help` option can be invoked at the global level to discover available subcommands and its options.
+
+Example 1:
+```bash
+$ tess-ida-get -h
+
+usage: tess-ida-get [-h] [--version] [--console] [--log-file <FILE>] [--verbose | --quiet] {single,range,photometers,near} ...
+
+Get TESS-W IDA monthly files from NextCloud server
+
+positional arguments:
+  {single,range,photometers,near}
+    single              Download single monthly file from a photometer
+    range               Download a month range from a photometer
+    photometers         Download a month range for selected photometers
+    near                Download a month range from photometers near a given location
+
+options:
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit
+  --console             Log to console.
+  --log-file <FILE>     Log to file.
+  --verbose             Verbose output.
+  --quiet               Quiet output.
+
+```
+
+Example 2:
+
+```bash
+usage: tess-ida-get near [-h] -lo <LON> -la <LAT> [-ra <R>] [-o OUT_DIR] [-s <YYYY-MM>] [-u <YYYY-MM>] [-c <N>] [--timeout TIMEOUT]
+
+options:
+  -h, --help            show this help message and exit
+  -lo <LON>, --longitude <LON>
+                        Longitude (decimal degrees)
+  -la <LAT>, --latitude <LAT>
+                        Latitude (decimal degrees)
+  -ra <R>, --radius <R>
+                        Search radius (Km) (defaults to 10 Km)
+  -o OUT_DIR, --out-dir OUT_DIR
+                        Output IDA base directory
+  -s <YYYY-MM>, --since <YYYY-MM>
+                        Year and Month (defaults to 2024-12-01 00:00:00)
+  -u <YYYY-MM>, --until <YYYY-MM>
+                        Year and Month (defaults to 2025-01-01 00:00:00)
+  -c <N>, --concurrent <N>
+                        Number of concurrent downloads (defaults to 4)
+  --timeout TIMEOUT     HTTP timeout in seconds (defaults to 300 sec.)
+
+```
 
 ## Installation and configuration
 
 ### Installation
 
-We strongly recommend making a Python virtual environment where you install this package and other packages related to your data analysis. A very popular way is to use [Jupyter Notebooks](https://jupyter.org/), so lets do this as an example.
+We strongly recommend making a Python virtual environment where you install this package and other packages related to your data analysis. A very popular way of performing data analysis is to use [Jupyter Notebooks](https://jupyter.org/), so lets do this as an example.
 
 The following lines create a jupyter folder from our home directory, a new Python virtual environment named `.venv` and activate it.
+
 ```bash
 ~$ mkdir jupyter
 cd jupyter 
@@ -54,8 +129,7 @@ IDA_URL=<NextCloud Server IDA base URL>
 DATABASE_FILE=adm/tessida.db
 ```
 
-The first one contains the base URL of our NextCloud Server where we publish the IDA files (and you should already have)
-The second one is the path of an auxiliar SQLite database file that help us in the process of download and convert IDA files to ECSV
+The first one contains the base URL of our NextCloud Server where we publish the IDA files (*you should already have this information*). The second one is the path of an auxiliar SQLite database file that help us in the process of download and convert IDA files to ECSV.
 
 The example above shows that we will create an `adm` subdirectory inside our working directory `~/jupyter` and a database file named `tessida.db`.
 
@@ -69,58 +143,34 @@ tess-ida-db --console schema create
 
 All the configuration is done now.
 
-## Available Utilities
+## Usage examples
 
-The TESS-IDA-TOOLS comprises the following scripts:
-* `tess-ida-db`. Auxiliar database management,
-* `tess-ida-get`. Download series of IDA monthly files.
-* `tess-ida-ecsv`. Transform series of monthly files. Combine series of ECSV files into one.
-* `tess-ida-pipe`. The complete download/transform/combine pipeline 
+### Download a single month
 
-All script support the following ***generic options***:
-* `--version`. Prints software version and quits.
-* `--console`. Prints execution info on the terminal console (up to level INFO)
-* `--log-file`. Appends the same execution info to a log file
-* `--quiet`. Suppresses all messages except CRITICAL, ERROR and WARNING.
-* `--verbose`. Includes DEBUG level messages.
-
-All scripts include a help system (`-h` or `--help`) to describe the available commands and command options.
-
-Examples:
-
+Getting a single file
 ```bash
-tess-ida-get -h
+tess-ida-get --console single -n stars289 -m 2023-06 -o IDA
 ```
 
-shows that this script has three commands: `single`, `range` and `photometers`
+### Download an specific IDA file
 
-Typing:
+Sometimes, the IDA files do not follow the generic `<name>_YYYY_MM.dat` format because the IDA file refers to a different location (the photometer has been reinstalled in another location).
 
-```bash
-tess-ida-get single -h
-tess-ida-get range -h
-tess-ida-get photometers -h
-```
-
-will show available options for each command. The generic options always come *before* the command.
-
-Example:
+For example, in Feb 2021, `stars201` was moved from an unknown location to a given location, so the files are named as `stars201_2020-02_-1.dat` and `stars201_2020-02_61.dat`.
 
 ```bash
-tess-ida-get --console --quiet photometers --list 1 703 328 --since 2024-03 --until 2024-07
+tess-ida-get --console single -n stars201 -e stars201_2020-02_-1.dat -o IDA
+tess-ida-get --console single -n stars201 -e stars201_2020-02_61.dat -o IDA
+```
+### Download files from photometers near a given location
+
+The example below downloads files from TESS photometers since last month in a 50 Km radius of Madrid, Spain.
+
+```bash
+tess-ida-get --console near -lo -3.703790 -la 40.416775 -ra 50 -o IDA
 ```
 
-The command above download range of files for photometers  stars1 stars703 and stars328.
-
-Many commands include `-s | --since` and `-u | --until` options. 
-If not specified, the default values are the previous month and current month respectively.
-
-Many commands include `-i | --input-dir` and `-o | output-dir` options.
-If not specified, the default value is the current working directory, like in the example above.
-
-## Simple usage example
-
-### Getting the IDA files and converting them to ECSV
+### Getting IDA files and converting them to ECSV
 
 In your jupyter working directory, with the activated virtual environment, type:
 
@@ -139,7 +189,7 @@ As the final product for this step, we have the `ECSV/stars289/stars289_201905-2
 
 1. Note that the transformation process will take a while (1-2 min per file), since every monthly file is added Solar Altitude, Moon Altitude and Moon Phase. However, if you re-run the script again, it will download all the files but will skip the transform part because the software detects no changes in IDA files.
 
-2. When combining a range of dates, all monthly files metadata should be the same. If this not happens, the tool will issue a warning and the ***lastest month*** is used as metadata for the combined ECSV file. It is recommended to inspect the IDA files manually to locate the differences and contact us to fix them if possible.
+2. When combining a range of dates, all monthly files metadata should be the same. If this not happens, the tool will issue a warning and the ***latest month*** is used as metadata for the combined ECSV file. It is recommended to inspect the IDA files manually to locate the differences and contact us to fix them if possible.
 
 ### Launching Jupyter
 
