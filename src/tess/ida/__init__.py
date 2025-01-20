@@ -4,6 +4,6 @@
 # See the LICENSE file for details
 # ----------------------------------------------------------------------
 
-from tess._version import __version__
+from tess.ida._version import __version__
 
 __all__ = ["__version__"]
