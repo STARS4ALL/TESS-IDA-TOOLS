@@ -238,7 +238,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
         parents=[
             prs.name(),
             prs.out_dir("ECSV"),
-            prs.inout_file("IDA", "combined ECSV"),
+            prs.inout_file("IDA", "combined ECSV", in_dir_exists=False),
             prs.mon_single(),
             prs.timeout(),
             prs.fix(),
@@ -251,7 +251,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
         parents=[
             prs.name(),
             prs.out_dir("ECSV"),
-            prs.inout_file("IDA", "combined ECSV"),
+            prs.inout_file("IDA", "combined ECSV", in_dir_exists=False),
             prs.mon_range(),
             prs.concurrent(),
             prs.fix(),
@@ -265,7 +265,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
         parents=[
             prs.phot_range(),
             prs.out_dir("ECSV"),
-            prs.inout_file("IDA", "combined ECSV"),
+            prs.inout_file("IDA", "combined ECSV", in_dir_exists=False),
             prs.mon_range(),
             prs.concurrent(),
             prs.fix(),
@@ -279,7 +279,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
         parents=[
             prs.location(),
             prs.out_dir("ECSV"),
-            prs.inout_file("IDA", "combined ECSV"),
+            prs.inout_file("IDA", "combined ECSV", in_dir_exists=False),
             prs.mon_range(),
             prs.concurrent(),
             prs.fix(),

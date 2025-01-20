@@ -386,7 +386,7 @@ def to_ecsv_combine(
         if candidate_month in months:
             candidate_path.append(path)
     if len(candidate_path) < 1:
-        log.warning("[%s] Not enough tables to combine. Check input parameters.", name)
+        log.warning("[%s] No tables to combine. Check range input parameters.", name)
         return
     acc_table = load_table(candidate_path[0])
     acc_table.meta["combined"] = [os.path.basename(candidate_path[0])]
@@ -397,7 +397,7 @@ def to_ecsv_combine(
     dirname = os.path.dirname(candidate_path[0])
     filename = (
         f"{name}_{since.strftime('%Y%m')}-{until.strftime('%Y%m')}.ecsv"
-        if not oname
+        if oname is None
         else oname
     )
     path = os.path.join(dirname, filename)

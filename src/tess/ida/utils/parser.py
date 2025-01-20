@@ -51,12 +51,14 @@ def fix() -> ArgumentParser:
     parser.add_argument("-f", "--fix", action="store_true", help="Fix unknown location")
     return parser
 
+
 def skip() -> ArgumentParser:
     parser = ArgumentParser(add_help=False)
     parser.add_argument(
         "-sd", "--skip-download", action="store_true", help="Skip download step"
     )
     return parser
+
 
 def timeout() -> ArgumentParser:
     parser = ArgumentParser(add_help=False)
@@ -69,10 +71,17 @@ def timeout() -> ArgumentParser:
     return parser
 
 
-def inout_dirs(tag_in: str = "", tag_out: str = "") -> ArgumentParser:
+def inout_dirs(
+    tag_in: str = "", tag_out: str = "", in_dir_exists: bool = True
+) -> ArgumentParser:
+    validator = vdir if in_dir_exists else str
     parser = ArgumentParser(add_help=False)
     parser.add_argument(
-        "-i", "--in-dir", type=vdir, default=None, help=f"Input {tag_in} base directory"
+        "-i",
+        "--in-dir",
+        type=validator,
+        default=None,
+        help=f"Input {tag_in} base directory",
     )
     parser.add_argument(
         "-o",
@@ -92,10 +101,17 @@ def out_dir(tag: str = "") -> ArgumentParser:
     return parser
 
 
-def inout_file(tag_in: str = "", tag_out: str = "") -> ArgumentParser:
+def inout_file(
+    tag_in: str = "", tag_out: str = "", in_dir_exists: bool = True
+) -> ArgumentParser:
+    validator = vdir if in_dir_exists else str
     parser = ArgumentParser(add_help=False)
     parser.add_argument(
-        "-i", "--in-dir", type=vdir, default=None, help=f"Input {tag_in} base directory"
+        "-i",
+        "--in-dir",
+        type=validator,
+        default=None,
+        help=f"Input {tag_in} base directory",
     )
     parser.add_argument(
         "-on",
@@ -187,6 +203,7 @@ def phot_range() -> ArgumentParser:
         help="Photometer number range",
     )
     return parser
+
 
 def location() -> ArgumentParser:
     parser = ArgumentParser(add_help=False)
