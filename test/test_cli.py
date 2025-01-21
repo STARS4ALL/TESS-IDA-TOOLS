@@ -19,6 +19,7 @@ import unittest
 from shlex import split
 from subprocess import run
 
+import decouple
 
 class TestDownload(unittest.TestCase):
     @classmethod
@@ -190,6 +191,78 @@ class TestPipeline(unittest.TestCase):
             )
         )
         self.assertEqual(result.returncode, 0)
+
+
+class TestDBase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.log = f"{cls.__name__}.log"
+        run(split(f"rm -fr {decouple.config('DATABASE_FILE')}"))
+
+    def test_1_schema_create(self):
+        result = run(
+            split(
+                f"tess-ida-db --log-file {self.log} --verbose schema create"
+            )
+        )
+        self.assertEqual(result.returncode, 0)
+
+    def test_2_coords_add(self):
+        result = run(
+            split(
+                f"tess-ida-db --log-file {self.log} --verbose coords add -n stars200 -lo -3.5 -la 40.5 -he 650"
+            )
+        )
+        self.assertEqual(result.returncode, 0)
+        result = run(
+            split(
+                f"tess-ida-db --log-file {self.log} --verbose coords add -n stars201 -lo -2 -la 41.2 -he 300"
+            )
+        )
+        self.assertEqual(result.returncode, 0)
+
+    def test_3_coords_list(self):
+        result = run(
+            split(
+                f"tess-ida-db --log-file {self.log} --verbose coords list -n stars200"
+            )
+        )
+        self.assertEqual(result.returncode, 0)
+        result = run(
+            split(
+                f"tess-ida-db --log-file {self.log} --verbose coords list"
+            )
+        )
+        self.assertEqual(result.returncode, 0)
+
+    def test_4_coords_update(self):
+        result = run(
+            split(
+                f"tess-ida-db --log-file {self.log} --verbose coords update -n stars200 -lo 3.5 -la 40.8 -he 0"
+            )
+        )
+        self.assertEqual(result.returncode, 0)
+        result = run(
+            split(
+                f"tess-ida-db --log-file {self.log} --verbose coords list"
+            )
+        )
+        self.assertEqual(result.returncode, 0)
+
+    def test_5_coords_delete(self):
+        result = run(
+            split(
+                f"tess-ida-db --log-file {self.log} --verbose coords delete -n stars200"
+            )
+        )
+        self.assertEqual(result.returncode, 0)
+        result = run(
+            split(
+                f"tess-ida-db --log-file {self.log} --verbose coords list"
+            )
+        )
+        self.assertEqual(result.returncode, 0)
+
 
 
 if __name__ == "__main__":

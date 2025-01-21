@@ -13,6 +13,7 @@ import sys
 import logging
 import sqlite3
 
+from importlib.resources import files
 from argparse import Namespace, ArgumentParser
 
 # -------------------
@@ -31,26 +32,15 @@ from lica.tabulate import paging
 
 from .. import __version__
 
-_SQL_PKG = "tess.ida.dbase.sql"
-_SQL_RES = "schema.sql"
-
-
-# Instead of a long, embeddded string, we read it as a Python resource
-if sys.version_info[1] < 11:
-    from pkg_resources import resource_string as resource_bytes
-
-    SCHEMA_SQL_TEXT = resource_bytes(_SQL_PKG, _SQL_RES).decode("utf-8")
-else:
-    from importlib.resources import files
-
-    SCHEMA_SQL_TEXT = files(_SQL_PKG).joinpath(_SQL_RES).read_text()
-
-
 # ----------------
 # Module constants
 # ----------------
 
 DESCRIPTION = "Database utility to speed up pipeline processing"
+
+_SQL_PKG = "tess.ida.dbase.sql"
+_SQL_RES = "schema.sql"
+SCHEMA_SQL_TEXT = files(_SQL_PKG).joinpath(_SQL_RES).read_text()
 
 # get the module logger
 log = logging.getLogger(__name__.split(".")[-1])
@@ -155,7 +145,8 @@ def cli_coords_list(args: Namespace) -> None:
             else:
                 sql = "SELECT phot_name, latitude, longitude, height FROM coords_t ORDER BY phot_name"
                 cursor.execute(sql)
-            paging(cursor, ("NAME", "LONGITUDE", "LATITUDE", "HEIGHT"))
+            print("\n")
+            paging(cursor, ("NAME", "LATITUDE", "LONGITUDE",  "HEIGHT"))
     except Exception as e:
         log.error(e)
     connection.close()
