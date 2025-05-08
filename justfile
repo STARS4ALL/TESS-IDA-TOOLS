@@ -49,6 +49,7 @@ test-publish: build
 # Testing commands
 # ----------------
 
+# test pipeline
 ida:
     #!/usr/bin/env bash
     set -exuo pipefail
