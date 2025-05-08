@@ -22,7 +22,7 @@ from typing import Sequence
 
 import decouple
 
-from lica.cli import async_execute
+from lica.asyncio.cli import execute
 from lica.typing import OptStr
 
 # --------------
@@ -304,7 +304,7 @@ async def cli_pipeline(args: Namespace) -> None:
 
 
 def main() -> None:
-    async_execute(
+    execute(
         main_func=cli_pipeline,
         add_args_func=add_args,
         name="tess-ida-pipe",

@@ -29,7 +29,7 @@ import aiohttp
 import aiofiles
 
 
-from lica.cli import async_execute
+from lica.asyncio.cli import execute
 from lica.misc import group
 from lica.typing import OptStr
 
@@ -350,7 +350,7 @@ async def cli_get_ida(args: Namespace) -> None:
 
 
 def main() -> None:
-    async_execute(
+    execute(
         main_func=cli_get_ida,
         add_args_func=add_args,
         name="tess-ida-get",

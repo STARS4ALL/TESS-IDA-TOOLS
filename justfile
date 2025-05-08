@@ -45,6 +45,17 @@ test-publish: build
         --extra-index-url https://pypi.org/simple/ \
         -- python -c "from {{module}} import __version__; print(__version__)"
 
+# ----------------
+# Testing commands
+# ----------------
+
+ida:
+    #!/usr/bin/env bash
+    set -exuo pipefail
+    for i in 1 7 17 33 62 73 75 76 85 88 201 202 272 495 536 555 608 612 639 660 714 746 747 749 759 795 831 835 945 1134 
+    do
+        uv run tess-ida-pipe --console single -m 2024-04 -i IDA -o ECSV -n stars${i} 
+    done
 # ---------------------------
 # LICA Library handling stuff
 # ---------------------------
