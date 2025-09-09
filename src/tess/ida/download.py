@@ -104,19 +104,22 @@ def float_coords(item: Dict[str, Any]) -> Dict[str, Any]:
     return item
 
 
-async def do_get_location_list(base_url: str, ida_base_dir: str, timeout: int) -> Sequence:
+async def do_get_location_list(
+    base_url: str, ida_base_dir: str, timeout: int
+) -> Sequence:
     target_file = "geolist.csv"
-    url = base_url + "/download"
-    params = {"path": "/", "files": target_file}
+    url = os.path.join(base_url, target_file)
     result = []
     timeout = aiohttp.ClientTimeout(total=timeout)
     async with aiohttp.ClientSession(timeout=timeout) as session:
-        async with session.get(url, params=params) as resp:
+        async with session.get(url, params=None) as resp:
             if resp.status == 404:
                 log.warn("No such file exits: %s", target_file)
                 return result
             log.info("[%s] GET %s [%d OK]", target_file, resp.url, resp.status)
             contents = await resp.text()
+            if len(contents) == 0:
+                log.warning("File size is 0. URL scheme may have changed ...")
             with io.StringIO(contents) as fd:
                 # reader = csv.reader(fd, delimiter=';')
                 reader = csv.DictReader(fd, delimiter=";")
@@ -127,16 +130,17 @@ async def do_get_location_list(base_url: str, ida_base_dir: str, timeout: int) -
 async def do_ida_single(
     session, base_url: str, ida_base_dir: str, name: str, month: OptStr, exact: OptStr
 ) -> None:
-    url = base_url + "/download"
     target_file = name + "_" + month + ".dat" if not exact else exact
-    params = {"path": "/" + name, "files": target_file}
+    url = os.path.join(base_url, name, target_file)
     _, month1 = name_month(target_file)
-    async with session.get(url, params=params) as resp:
+    async with session.get(url, params=None) as resp:
         if resp.status == 404:
             log.warn("[%s] No monthly file exits: %s", name, target_file)
             return
         log.info("[%s] [%s] GET %s [%d OK]", name, month1, resp.url, resp.status)
         contents = await resp.text()
+    if len(contents) == 0:
+        log.warning("File size is 0. URL scheme may have changed ...")
     full_dir_path = await asyncio.to_thread(makedirs, ida_base_dir, name)
     file_path = os.path.join(full_dir_path, target_file)
     async with aiofiles.open(file_path, mode="w") as f:
@@ -161,6 +165,7 @@ async def do_ida_range(
             for m in grp
         ]
         await asyncio.gather(*tasks)
+
 
 # ===========
 # Generic API
@@ -231,7 +236,9 @@ async def ida_photometers(
     timeout: int,
 ) -> None:
     for name in ida_names_by_seq_or_range(seq, rang):
-        await download_ida_range(base_url, ida_base_dir, name, since, until, concurrent, timeout)
+        await download_ida_range(
+            base_url, ida_base_dir, name, since, until, concurrent, timeout
+        )
 
 
 async def ida_location(
@@ -249,7 +256,9 @@ async def ida_location(
         base_url, ida_base_dir, lon, lat, radius, timeout
     )
     for name in names:
-        await download_ida_range(base_url, ida_base_dir, name, since, until, concurrent, timeout)
+        await download_ida_range(
+            base_url, ida_base_dir, name, since, until, concurrent, timeout
+        )
 
 
 # ================================
