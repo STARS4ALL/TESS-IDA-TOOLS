@@ -232,3 +232,14 @@ def location() -> ArgumentParser:
         help="Search radius (Km) (defaults to %(default)s Km)",
     )
     return parser
+
+
+def insec() -> ArgumentParser:
+    parser = ArgumentParser(add_help=False)
+    parser.add_argument(
+        "--insecure",
+        action="store_true",
+        default=False,
+        help="Don't verify server certificates",
+    )
+    return parser
