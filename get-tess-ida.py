@@ -89,26 +89,34 @@ def name_month(ida_file_path: str) -> tuple:
 # Work functions
 # --------------
 
-
-def do_ida_single_month(base_url: str, ida_base_dir: str, name: str, month: OptStr, exact: OptStr, timeout: int) -> None:
-    url = base_url + '/download'
-    target_file = name + '_' + month + '.dat' if not exact else exact
+def do_ida_single_month(
+    base_url: str,
+    ida_base_dir: str,
+    name: str,
+    month: OptStr,
+    exact: OptStr,
+    timeout: int,
+) -> None:
+    target_file = name + "_" + month + ".dat" if not exact else exact
+    url = os.path.join(base_url, name, target_file)
     _, month1 = name_month(target_file)
-    params = {'path': '/' + name, 'files': target_file}
+    params = None
+    # For the time being we disable server certificate validation
     resp = requests.get(url, params=params, timeout=timeout, verify=False)
     if resp.status_code == 404:
-        log.warning("[%s] [%s] No monthly file exits: %s",
-                    name, month1, target_file)
+        log.warning("[%s] [%s] No monthly file exits: %s", name, month1, target_file)
         return
     resp.raise_for_status()  # catch other unexpected return code
-    log.info("[%s] [%s] GET %s [%d OK]", name,
-             month1, resp.url, resp.status_code)
+    log.info("[%s] [%s] GET %s [%d OK]", name, month1, resp.url, resp.status_code)
     contents = resp.text
+    if len(contents) == 0:
+        log.warning("File size is 0. URL scheme may have changed ...")
     full_dir_path = makedirs(ida_base_dir, name)
     file_path = os.path.join(full_dir_path, target_file)
-    with open(file_path, mode='w') as f:
+    with open(file_path, mode="w") as f:
         log.info("[%s] [%s] Writing %s", name, month1, file_path)
         f.write(contents)
+
 
 # ================================
 # COMMAND LINE INTERFACE FUNCTIONS

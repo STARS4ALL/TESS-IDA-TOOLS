@@ -57,6 +57,15 @@ ida:
     do
         uv run tess-ida-pipe --console single -m 2024-04 -i IDA -o ECSV -n stars${i} 
     done
+
+aus:
+    #!/usr/bin/env bash
+    set -exuo pipefail
+    for i in 460 
+    do
+        uv run tess-ida-pipe --console range -n stars${i}  -s 2019-05 -u 2025-09 -i IDA -o ECSV
+    done
+
 # ---------------------------
 # LICA Library handling stuff
 # ---------------------------
