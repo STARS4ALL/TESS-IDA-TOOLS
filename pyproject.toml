@@ -56,6 +56,11 @@ tess-ida-db = "tess.ida.dbase.schema:main"
 requires = ["setuptools >= 45", "wheel", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
+[dependency-groups]
+dev = [
+    "pytest>=8.3.3"
+ ]
+
 # pyproject.toml
 # Automatically generates a _version-py file from with Git information
 # This file shold be placed in .gitignore
@@ -70,11 +75,6 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "tess.ida.dbase.sql" = ["*.sql",]
-
-[tool.uv]
-dev-dependencies = [
-    "pytest>=8.3.3",
-]
 
 [tool.uv.sources]
 
