@@ -95,7 +95,7 @@ def do_ida_single_month(base_url: str, ida_base_dir: str, name: str, month: OptS
     target_file = name + '_' + month + '.dat' if not exact else exact
     _, month1 = name_month(target_file)
     params = {'path': '/' + name, 'files': target_file}
-    resp = requests.get(url, params=params, timeout=timeout)
+    resp = requests.get(url, params=params, timeout=timeout, verify=False)
     if resp.status_code == 404:
         log.warning("[%s] [%s] No monthly file exits: %s",
                     name, month1, target_file)

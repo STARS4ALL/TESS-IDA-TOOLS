@@ -131,7 +131,7 @@ async def do_ida_single(
     target_file = name + "_" + month + ".dat" if not exact else exact
     params = {"path": "/" + name, "files": target_file}
     _, month1 = name_month(target_file)
-    async with session.get(url, params=params) as resp:
+    async with session.get(url, params=params, verify=False) as resp:
         if resp.status == 404:
             log.warn("[%s] No monthly file exits: %s", name, target_file)
             return
