@@ -106,7 +106,7 @@ Downloads and other needed files will be created unde this directory.
 ~$ mkdir tidatools
  ~$ cd tidatools/
  ```
- and then a virtual envirenment inside this base project directpry.
+ and then a virtual environment inside this base project directpry.
 
  ```bash
  tidatools$ uv venv --python 3.12
@@ -114,6 +114,19 @@ Using CPython 3.12.3 interpreter at: /usr/bin/python3
 Creating virtual environment at: .venv
 Activate with: source .venv/bin/activate
 tidatools$ 
+```
+
+#### Adding TESS-IDA-TOOLS
+
+We can install the latest stable release of the tools from PyPi using UV:
+
+```bash
+tidatools$ uv pip install tess-ida-tools
+Resolved 30 packages in 271ms
+Installed 20 packages in 29ms
+ [...]
+ tidatools$ 
+
 ```
 
 #### Adding convenience packages
@@ -131,26 +144,6 @@ Installed 100 packages in 147ms
 tidatools$
 ```
 
-Now we install jupyter and matplotlib for the charts:
-
-```bash
-pip install -U pip
-pip install notebook matplotlib
-```
-
-#### Adding TESS-IDA-TOOLS
-
-Finally, we can install the latest stable release of the tools from PyPi:
-```bash
-tidatools$ uv pip install tess-ida-tools
-tidatools$ uv pip install tess-ida-tools
-Resolved 30 packages in 271ms
-Installed 20 packages in 29ms
- [...]
- tidatools$ 
-
-```
-
 ### Configuration
 
 With the help of a text editor, create a new auxiliar environment file called `.env` located in our `tidatools` directory.
@@ -161,7 +154,7 @@ IDA_URL=<NextCloud Server IDA base URL>
 DATABASE_FILE=adm/tessida.db
 ```
 
-The first one contains the base URL of our NextCloud Server where we publish the IDA files (*you should already have this information*). The second one is the path of an auxiliar SQLite database file that help us in the process of download and convert IDA files to ECSV.
+The first one contains the base URL of our NextCloud Server where we publish the IDA files (*Contact us to obtain this value*). The second one is the path of an auxiliar SQLite database file that help us in the process of download and convert IDA files to ECSV.
 
 The example above shows that we will create an `adm` subdirectory inside our working directory `~/tidatools` and a database file named `tessida.db`.
 
