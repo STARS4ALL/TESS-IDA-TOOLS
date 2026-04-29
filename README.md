@@ -38,7 +38,7 @@ The `--help` option can be invoked at the global level to discover available sub
 
 Example 1:
 ```bash
-$ tess-ida-get -h
+$ uv run tess-ida-get -h
 
 usage: tess-ida-get [-h] [--version] [--console] [--log-file <FILE>] [--verbose | --quiet] {single,range,photometers,near} ...
 
