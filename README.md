@@ -93,8 +93,8 @@ options:
 We **strongly recommend using the new UV tool** to handle your installation in a virtual environment. The rest of the document assumes uv is available.
 
 To install UV, please follow the following Astral docs:
-[Installing UV for Linux/MacOS](https://docs.astral.sh/uv/getting-started/installation/#__tabbed_1_1)
-[Installing UV for Windows](https://docs.astral.sh/uv/getting-started/installation/#__tabbed_2_2)
+* [Installing UV for Linux/MacOS](https://docs.astral.sh/uv/getting-started/installation/#__tabbed_1_1)
+* [Installing UV for Windows](https://docs.astral.sh/uv/getting-started/installation/#__tabbed_2_2)
 
 
 #### Creating a project directory a virtual environment with UV
