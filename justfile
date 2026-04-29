@@ -63,7 +63,15 @@ aus:
     set -exuo pipefail
     for i in 460 
     do
-        uv run tess-ida-pipe --console range -n stars${i}  -s 2019-05 -u 2025-09 -i IDA -o ECSV
+        uv run tess-ida-pipe --console --trace range -n stars${i}  -s 2019-05 -u 2025-09 -i IDA -o ECSV --insecure
+    done
+
+stars52:
+    #!/usr/bin/env bash
+    set -exuo pipefail
+    for i in 52 
+    do
+        uv run tess-ida-pipe --console --trace range -n stars${i}  -s 2017-01  -i IDA -o ECSV
     done
 
 # ---------------------------

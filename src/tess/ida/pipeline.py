@@ -33,10 +33,10 @@ from . import __version__
 from .utils import parser as prs
 from .dbase import aux_dbase_load, aux_dbase_save
 from .download import (
-    download_ida_single, 
-    download_ida_range, 
-    ida_names_by_seq_or_range, 
-    ida_names_by_location
+    download_ida_single,
+    download_ida_range,
+    ida_names_by_seq_or_range,
+    ida_names_by_location,
 )
 from .timeseries import (
     to_ecsv_single,
@@ -77,8 +77,11 @@ async def pipe_single(
     exact: OptStr,
     fix: bool,
     timeout: int,
+    insecure: bool,
 ) -> None:
-    await download_ida_single(base_url, ida_base_dir, name, month, exact, timeout)
+    await download_ida_single(
+        base_url, ida_base_dir, name, month, exact, timeout, insecure
+    )
     await asyncio.to_thread(
         to_ecsv_single, ida_base_dir, name, month, exact, ecsv_base_dir, fix
     )
@@ -96,10 +99,11 @@ async def pipe_range(
     fix: bool,
     concurrent: int,
     timeout: int,
+    insecure: bool,
 ) -> None:
     if not skip_download:
         await download_ida_range(
-            base_url, ida_base_dir, name, since, until, concurrent, timeout
+            base_url, ida_base_dir, name, since, until, concurrent, timeout, insecure
         )
     await asyncio.to_thread(
         to_ecsv_range, ida_base_dir, name, ecsv_base_dir, since, until, fix
@@ -120,11 +124,21 @@ async def pipe_photometers(
     fix: bool,
     concurrent: int,
     timeout: int,
+    insecure: bool,
 ) -> None:
     names = ida_names_by_seq_or_range(seq, rang)
     if not skip_download:
         for name in names:
-            await download_ida_range(base_url, ida_base_dir, name, since, until, concurrent, timeout)
+            await download_ida_range(
+                base_url,
+                ida_base_dir,
+                name,
+                since,
+                until,
+                concurrent,
+                timeout,
+                insecure,
+            )
     for name in names:
         await asyncio.to_thread(
             to_ecsv_range, ida_base_dir, name, ecsv_base_dir, since, until, fix
@@ -132,6 +146,7 @@ async def pipe_photometers(
         await asyncio.to_thread(
             to_ecsv_combine, ecsv_base_dir, name, since, until, oname
         )
+
 
 async def pipe_location(
     base_url: str,
@@ -147,13 +162,23 @@ async def pipe_location(
     fix: bool,
     concurrent: int,
     timeout: int,
+    insecure: bool,
 ) -> None:
     names = await ida_names_by_location(
-        base_url, ida_base_dir, lon, lat, radius, timeout
+        base_url, ida_base_dir, lon, lat, radius, timeout, insecure
     )
     if not skip_download:
         for name in names:
-            await download_ida_range(base_url, ida_base_dir, name, since, until, concurrent, timeout)
+            await download_ida_range(
+                base_url,
+                ida_base_dir,
+                name,
+                since,
+                until,
+                concurrent,
+                timeout,
+                insecure,
+            )
     for name in names:
         await asyncio.to_thread(
             to_ecsv_range, ida_base_dir, name, ecsv_base_dir, since, until, fix
@@ -162,9 +187,11 @@ async def pipe_location(
             to_ecsv_combine, ecsv_base_dir, name, since, until, oname
         )
 
+
 # ================================
 # COMMAND LINE INTERFACE FUNCTIONS
 # ================================
+
 
 async def cli_pipe_single(args: Namespace) -> None:
     await pipe_single(
@@ -176,6 +203,7 @@ async def cli_pipe_single(args: Namespace) -> None:
         exact=args.exact,
         fix=True if args.fix else False,
         timeout=args.timeout,
+        insecure=args.insecure,
     )
 
 
@@ -192,6 +220,7 @@ async def cli_pipe_range(args: Namespace) -> None:
         fix=True if args.fix else False,
         concurrent=args.concurrent,
         timeout=args.timeout,
+        insecure=args.insecure,
     )
 
 
@@ -209,6 +238,7 @@ async def cli_pipe_photometers(args: Namespace) -> None:
         fix=True if args.fix else False,
         concurrent=args.concurrent,
         timeout=args.timeout,
+        insecure=args.insecure,
     )
 
 
@@ -227,6 +257,7 @@ async def cli_pipe_location(args: Namespace) -> None:
         fix=True if args.fix else False,
         concurrent=args.concurrent,
         timeout=args.timeout,
+        insecure=args.insecure,
     )
 
 
@@ -242,6 +273,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
             prs.mon_single(),
             prs.timeout(),
             prs.fix(),
+            prs.insec(),
         ],
         help="Process single monthly file from a photometer",
     )
@@ -256,6 +288,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
             prs.concurrent(),
             prs.fix(),
             prs.skip(),
+            prs.insec(),
         ],
         help="Process a month range from a photometer",
     )
@@ -270,6 +303,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
             prs.concurrent(),
             prs.fix(),
             prs.skip(),
+            prs.insec(),
         ],
         help="Download a month range for selected photometers",
     )
@@ -284,6 +318,7 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
             prs.concurrent(),
             prs.fix(),
             prs.skip(),
+            prs.insec(),
         ],
         help="Process a month range from photometers near a given location",
     )

@@ -11,6 +11,7 @@
 import os
 import io
 import csv
+import ssl
 import math
 import asyncio
 import logging
@@ -105,15 +106,19 @@ def float_coords(item: Dict[str, Any]) -> Dict[str, Any]:
 
 
 async def do_get_location_list(
-    base_url: str, ida_base_dir: str, timeout: int
+    base_url: str,
+    ida_base_dir: str,
+    timeout: int,
+    insecure: bool,
 ) -> Sequence:
     target_file = "geolist.csv"
     url = base_url + "/download"
     params = {"path": "/", "files": target_file}
     result = []
     timeout = aiohttp.ClientTimeout(total=timeout)
+    sslcontext = False if insecure else ssl.create_default_context()
     async with aiohttp.ClientSession(timeout=timeout) as session:
-        async with session.get(url, params=params) as resp:
+        async with session.get(url, params=params, ssl=sslcontext) as resp:
             if resp.status == 404:
                 log.warn("No such file exits: %s", target_file)
                 return result
@@ -127,13 +132,19 @@ async def do_get_location_list(
 
 
 async def do_ida_single(
-    session, base_url: str, ida_base_dir: str, name: str, month: OptStr, exact: OptStr
+    session,
+    base_url: str,
+    ida_base_dir: str,
+    name: str,
+    month: OptStr,
+    exact: OptStr,
+    insecure: bool,
 ) -> None:
     target_file = name + "_" + month + ".dat" if not exact else exact
     url = os.path.join(base_url, name, target_file)
     _, month1 = name_month(target_file)
-    # For the time being we disable server certificate validation
-    async with session.get(url, params=None, ssl=False) as resp:
+    sslcontext = False if insecure else ssl.create_default_context()
+    async with session.get(url, params=None, ssl=sslcontext) as resp:
         if resp.status == 404:
             log.warn("[%s] No monthly file exits: %s", name, target_file)
             return
@@ -156,11 +167,12 @@ async def do_ida_range(
     since: datetime,
     until: datetime,
     N: int,
+    insecure: bool,
 ) -> None:
     for grp in group(N, month_range(since, until)):
         tasks = [
             asyncio.create_task(
-                do_ida_single(session, base_url, ida_base_dir, name, m, None)
+                do_ida_single(session, base_url, ida_base_dir, name, m, None, insecure)
             )
             for m in grp
         ]
@@ -179,9 +191,10 @@ async def ida_names_by_location(
     lat: float,
     radius: float,
     timeout: int,
+    insecure: bool,
 ) -> Tuple[str]:
     by_distance = functools.partial(filter_by_distance, lon, lat, 1000 * radius)
-    result = await do_get_location_list(base_url, ida_base_dir, timeout)
+    result = await do_get_location_list(base_url, ida_base_dir, timeout, insecure)
     return tuple(item["name"] for item in filter(by_distance, result))
 
 
@@ -201,12 +214,15 @@ async def download_ida_single(
     month: OptStr,
     exact: OptStr,
     timeout: int,
+    insecure: bool,
 ) -> None:
     timeout = aiohttp.ClientTimeout(total=timeout)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         if not exact:
             month = month.strftime("%Y-%m")
-        await do_ida_single(session, base_url, ida_base_dir, name, month, exact)
+        await do_ida_single(
+            session, base_url, ida_base_dir, name, month, exact, insecure
+        )
 
 
 async def download_ida_range(
@@ -217,11 +233,12 @@ async def download_ida_range(
     until: datetime,
     concurrent: int,
     timeout: int,
+    insecure: bool,
 ) -> None:
     timeout = aiohttp.ClientTimeout(total=timeout)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         await do_ida_range(
-            session, base_url, ida_base_dir, name, since, until, concurrent
+            session, base_url, ida_base_dir, name, since, until, concurrent, insecure
         )
 
 
@@ -234,10 +251,11 @@ async def ida_photometers(
     until: datetime,
     concurrent: int,
     timeout: int,
+    insecure: bool,
 ) -> None:
     for name in ida_names_by_seq_or_range(seq, rang):
         await download_ida_range(
-            base_url, ida_base_dir, name, since, until, concurrent, timeout
+            base_url, ida_base_dir, name, since, until, concurrent, timeout, insecure
         )
 
 
@@ -251,13 +269,14 @@ async def ida_location(
     until: datetime,
     concurrent: int,
     timeout: int,
+    insecure: bool,
 ) -> None:
     names = await ida_names_by_location(
-        base_url, ida_base_dir, lon, lat, radius, timeout
+        base_url, ida_base_dir, lon, lat, radius, timeout, insecure
     )
     for name in names:
         await download_ida_range(
-            base_url, ida_base_dir, name, since, until, concurrent, timeout
+            base_url, ida_base_dir, name, since, until, concurrent, timeout, insecure
         )
 
 
@@ -274,6 +293,7 @@ async def cli_ida_single(args: Namespace) -> None:
         month=args.month,
         exact=args.exact,
         timeout=args.timeout,
+        insecure=args.insecure,
     )
 
 
@@ -286,6 +306,7 @@ async def cli_ida_range(args: Namespace) -> None:
         until=args.until,
         concurrent=args.concurrent,
         timeout=args.timeout,
+        insecure=args.insecure,
     )
 
 
@@ -299,6 +320,7 @@ async def cli_ida_photometers(args: Namespace) -> None:
         until=args.until,
         concurrent=args.concurrent,
         timeout=args.timeout,
+        insecure=args.insecure,
     )
 
 
@@ -313,6 +335,7 @@ async def cli_ida_location(args: Namespace) -> None:
         until=args.until,
         concurrent=args.concurrent,
         timeout=args.timeout,
+        insecure=args.insecure,
     )
 
 
@@ -321,13 +344,25 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
     subparser = parser.add_subparsers(dest="command")
     parser_single = subparser.add_parser(
         "single",
-        parents=[prs.name(), prs.out_dir("IDA"), prs.mon_single(), prs.timeout()],
+        parents=[
+            prs.name(),
+            prs.out_dir("IDA"),
+            prs.mon_single(),
+            prs.timeout(),
+            prs.insec(),
+        ],
         help="Download single monthly file from a photometer",
     )
     parser_single.set_defaults(func=cli_ida_single)
     parser_range = subparser.add_parser(
         "range",
-        parents=[prs.name(), prs.out_dir("IDA"), prs.mon_range(), prs.concurrent()],
+        parents=[
+            prs.name(),
+            prs.out_dir("IDA"),
+            prs.mon_range(),
+            prs.concurrent(),
+            prs.insec(),
+        ],
         help="Download a month range from a photometer",
     )
     parser_range.set_defaults(func=cli_ida_range)
@@ -338,13 +373,20 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
             prs.out_dir("IDA"),
             prs.mon_range(),
             prs.concurrent(),
+            prs.insec(),
         ],
         help="Download a month range for selected photometers",
     )
     parser_phots.set_defaults(func=cli_ida_photometers)
     parser_location = subparser.add_parser(
         "near",
-        parents=[prs.location(), prs.out_dir("IDA"), prs.mon_range(), prs.concurrent()],
+        parents=[
+            prs.location(),
+            prs.out_dir("IDA"),
+            prs.mon_range(),
+            prs.concurrent(),
+            prs.insec(),
+        ],
         help="Download a month range from photometers near a given location",
     )
     parser_location.set_defaults(func=cli_ida_location)
