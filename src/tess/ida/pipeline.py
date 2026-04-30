@@ -33,10 +33,10 @@ from . import __version__
 from .utils import parser as prs
 from .dbase import aux_dbase_load, aux_dbase_save
 from .download import (
-    download_ida_single, 
-    download_ida_range, 
-    ida_names_by_seq_or_range, 
-    ida_names_by_location
+    download_ida_single,
+    download_ida_range,
+    ida_names_by_seq_or_range,
+    ida_names_by_location,
 )
 from .timeseries import (
     to_ecsv_single,
@@ -70,6 +70,7 @@ log = logging.getLogger(__name__.split(".")[-1])
 
 async def pipe_single(
     base_url: str,
+    dns_servers: list[str, str],
     ida_base_dir: OptStr,
     ecsv_base_dir: OptStr,
     name: str,
@@ -78,7 +79,9 @@ async def pipe_single(
     fix: bool,
     timeout: int,
 ) -> None:
-    await download_ida_single(base_url, ida_base_dir, name, month, exact, timeout)
+    await download_ida_single(
+        base_url, dns_servers, ida_base_dir, name, month, exact, timeout
+    )
     await asyncio.to_thread(
         to_ecsv_single, ida_base_dir, name, month, exact, ecsv_base_dir, fix
     )
@@ -86,6 +89,7 @@ async def pipe_single(
 
 async def pipe_range(
     base_url: str,
+    dns_servers: list[str, str],
     ida_base_dir: OptStr,
     ecsv_base_dir: OptStr,
     name: str,
@@ -99,7 +103,7 @@ async def pipe_range(
 ) -> None:
     if not skip_download:
         await download_ida_range(
-            base_url, ida_base_dir, name, since, until, concurrent, timeout
+            base_url, dns_servers, ida_base_dir, name, since, until, concurrent, timeout
         )
     await asyncio.to_thread(
         to_ecsv_range, ida_base_dir, name, ecsv_base_dir, since, until, fix
@@ -109,6 +113,7 @@ async def pipe_range(
 
 async def pipe_photometers(
     base_url: str,
+    dns_servers: list[str, str],
     ida_base_dir: OptStr,
     ecsv_base_dir: OptStr,
     rang: Sequence[int],
@@ -124,7 +129,16 @@ async def pipe_photometers(
     names = ida_names_by_seq_or_range(seq, rang)
     if not skip_download:
         for name in names:
-            await download_ida_range(base_url, ida_base_dir, name, since, until, concurrent, timeout)
+            await download_ida_range(
+                base_url,
+                dns_servers,
+                ida_base_dir,
+                name,
+                since,
+                until,
+                concurrent,
+                timeout,
+            )
     for name in names:
         await asyncio.to_thread(
             to_ecsv_range, ida_base_dir, name, ecsv_base_dir, since, until, fix
@@ -133,8 +147,10 @@ async def pipe_photometers(
             to_ecsv_combine, ecsv_base_dir, name, since, until, oname
         )
 
+
 async def pipe_location(
     base_url: str,
+    dns_servers: list[str, str],
     ida_base_dir: OptStr,
     ecsv_base_dir: OptStr,
     lon: float,
@@ -149,11 +165,20 @@ async def pipe_location(
     timeout: int,
 ) -> None:
     names = await ida_names_by_location(
-        base_url, ida_base_dir, lon, lat, radius, timeout
+        base_url, dns_servers, ida_base_dir, lon, lat, radius, timeout
     )
     if not skip_download:
         for name in names:
-            await download_ida_range(base_url, ida_base_dir, name, since, until, concurrent, timeout)
+            await download_ida_range(
+                base_url,
+                dns_servers,
+                ida_base_dir,
+                name,
+                since,
+                until,
+                concurrent,
+                timeout,
+            )
     for name in names:
         await asyncio.to_thread(
             to_ecsv_range, ida_base_dir, name, ecsv_base_dir, since, until, fix
@@ -162,13 +187,16 @@ async def pipe_location(
             to_ecsv_combine, ecsv_base_dir, name, since, until, oname
         )
 
+
 # ================================
 # COMMAND LINE INTERFACE FUNCTIONS
 # ================================
 
+
 async def cli_pipe_single(args: Namespace) -> None:
     await pipe_single(
         base_url=args.base_url,
+        dns_servers=[args.dns_pri, args.dns_sec],
         ida_base_dir=args.in_dir,
         ecsv_base_dir=args.out_dir,
         name=args.name,
@@ -182,6 +210,7 @@ async def cli_pipe_single(args: Namespace) -> None:
 async def cli_pipe_range(args: Namespace) -> None:
     await pipe_range(
         base_url=args.base_url,
+        dns_servers=[args.dns_pri, args.dns_sec],
         ida_base_dir=args.in_dir,
         ecsv_base_dir=args.out_dir,
         name=args.name,
@@ -198,6 +227,7 @@ async def cli_pipe_range(args: Namespace) -> None:
 async def cli_pipe_photometers(args: Namespace) -> None:
     await pipe_photometers(
         base_url=args.base_url,
+        dns_servers=[args.dns_pri, args.dns_sec],
         ida_base_dir=args.in_dir,
         ecsv_base_dir=args.out_dir,
         seq=args.list,
@@ -215,6 +245,7 @@ async def cli_pipe_photometers(args: Namespace) -> None:
 async def cli_pipe_location(args: Namespace) -> None:
     await pipe_location(
         base_url=args.base_url,
+        dns_servers=[args.dns_pri, args.dns_sec],
         ida_base_dir=args.in_dir,
         ecsv_base_dir=args.out_dir,
         lon=args.longitude,
@@ -294,6 +325,8 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
 async def cli_pipeline(args: Namespace) -> None:
     """The main entry point specified by pyproject.toml"""
     args.base_url = decouple.config("IDA_URL")
+    args.dns_pri = decouple.config("DNS_PRIMARY", default="8.8.8.8")
+    args.dns_sec = decouple.config("DNS_SECONDARY", default="8.8.4.4")
     aux_dbase_load()
     try:
         await args.func(args)

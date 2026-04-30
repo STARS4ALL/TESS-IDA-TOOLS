@@ -106,21 +106,18 @@ def float_coords(item: Dict[str, Any]) -> Dict[str, Any]:
     return item
 
 
-
 async def do_get_location_list(
-    base_url: str, ida_base_dir: str, timeout: int
+    base_url: str, dns_servers: list[str, str], ida_base_dir: str, timeout: int
 ) -> Sequence:
     target_file = "geolist.csv"
     url = os.path.join(base_url, target_file)
     result = []
     timeout = aiohttp.ClientTimeout(total=timeout)
-    log.info("using the new do_get_location_list() with Google DNS")
     # Resolver DNS con Google (soluciona Windows)
-    resolver = aiohttp.resolver.AsyncResolver(nameservers=['8.8.8.8', '8.8.4.4'])
+    resolver = aiohttp.resolver.AsyncResolver(nameservers=dns_servers)
+    ssl_context = ssl.create_default_context(cafile=certifi.where())
     connector = aiohttp.TCPConnector(
-        resolver=resolver,
-        ttl_dns_cache=300,
-        use_dns_cache=True
+        resolver=resolver, ssl=ssl_context, ttl_dns_cache=300, use_dns_cache=True
     )
     async with aiohttp.ClientSession(timeout=timeout, connector=connector) as session:
         async with session.get(url, params=None) as resp:
@@ -135,6 +132,7 @@ async def do_get_location_list(
                 reader = csv.DictReader(fd, delimiter=";")
                 result = list(map(float_coords, reader))
     return result
+
 
 async def do_ida_single(
     session, base_url: str, ida_base_dir: str, name: str, month: OptStr, exact: OptStr
@@ -183,6 +181,7 @@ async def do_ida_range(
 
 async def ida_names_by_location(
     base_url: str,
+    dns_servers: list[str, str],
     ida_base_dir: str,
     lon: float,
     lat: float,
@@ -190,7 +189,7 @@ async def ida_names_by_location(
     timeout: int,
 ) -> Tuple[str]:
     by_distance = functools.partial(filter_by_distance, lon, lat, 1000 * radius)
-    result = await do_get_location_list(base_url, ida_base_dir, timeout)
+    result = await do_get_location_list(base_url, dns_servers, ida_base_dir, timeout)
     return tuple(item["name"] for item in filter(by_distance, result))
 
 
@@ -202,19 +201,25 @@ def ida_names_by_seq_or_range(seq: Sequence[int], rang: Sequence[int]) -> Tuple[
         result = tuple("stars" + str(i) for i in range(rang[0], rang[1] + 1))
     return result
 
+
 async def download_ida_single(
     base_url: str,
+    dns_servers: list[str, str],
     ida_base_dir: str,
     name: str,
     month: OptStr,
     exact: OptStr,
     timeout: int,
 ) -> None:
-    resolver = aiohttp.resolver.AsyncResolver(nameservers=['8.8.8.8', '8.8.4.4'])
+    resolver = aiohttp.resolver.AsyncResolver(nameservers=dns_servers)
     ssl_context = ssl.create_default_context(cafile=certifi.where())
-    connector = aiohttp.TCPConnector(resolver=resolver, ssl=ssl_context, ttl_dns_cache=300, use_dns_cache=True)
+    connector = aiohttp.TCPConnector(
+        resolver=resolver, ssl=ssl_context, ttl_dns_cache=300, use_dns_cache=True
+    )
     session_timeout = aiohttp.ClientTimeout(total=timeout)
-    async with aiohttp.ClientSession(timeout=session_timeout, connector=connector) as session:
+    async with aiohttp.ClientSession(
+        timeout=session_timeout, connector=connector
+    ) as session:
         if not exact:
             month = month.strftime("%Y-%m")
         await do_ida_single(session, base_url, ida_base_dir, name, month, exact)
@@ -222,6 +227,7 @@ async def download_ida_single(
 
 async def download_ida_range(
     base_url: str,
+    dns_servers: list[str, str],
     ida_base_dir: str,
     name: str,
     since: datetime,
@@ -229,8 +235,15 @@ async def download_ida_range(
     concurrent: int,
     timeout: int,
 ) -> None:
-    timeout = aiohttp.ClientTimeout(total=timeout)
-    async with aiohttp.ClientSession(timeout=timeout) as session:
+    resolver = aiohttp.resolver.AsyncResolver(nameservers=dns_servers)
+    ssl_context = ssl.create_default_context(cafile=certifi.where())
+    connector = aiohttp.TCPConnector(
+        resolver=resolver, ssl=ssl_context, ttl_dns_cache=300, use_dns_cache=True
+    )
+    session_timeout = aiohttp.ClientTimeout(total=timeout)
+    async with aiohttp.ClientSession(
+        timeout=session_timeout, connector=connector
+    ) as session:
         await do_ida_range(
             session, base_url, ida_base_dir, name, since, until, concurrent
         )
@@ -238,6 +251,7 @@ async def download_ida_range(
 
 async def ida_photometers(
     base_url: str,
+    dns_servers: list[str, str],
     ida_base_dir: str,
     rang: Sequence[int],
     seq: Sequence[int],
@@ -248,12 +262,13 @@ async def ida_photometers(
 ) -> None:
     for name in ida_names_by_seq_or_range(seq, rang):
         await download_ida_range(
-            base_url, ida_base_dir, name, since, until, concurrent, timeout
+            base_url, dns_servers, ida_base_dir, name, since, until, concurrent, timeout
         )
 
 
 async def ida_location(
     base_url: str,
+    dns_servers: list[str, str],
     ida_base_dir: str,
     lon: float,
     lat: float,
@@ -264,11 +279,11 @@ async def ida_location(
     timeout: int,
 ) -> None:
     names = await ida_names_by_location(
-        base_url, ida_base_dir, lon, lat, radius, timeout
+        base_url, dns_servers, ida_base_dir, lon, lat, radius, timeout
     )
     for name in names:
         await download_ida_range(
-            base_url, ida_base_dir, name, since, until, concurrent, timeout
+            base_url, dns_servers, ida_base_dir, name, since, until, concurrent, timeout
         )
 
 
@@ -280,6 +295,7 @@ async def ida_location(
 async def cli_ida_single(args: Namespace) -> None:
     await download_ida_single(
         base_url=args.base_url,
+        dns_servers=[args.dns_pri, args.dns_sec],
         ida_base_dir=args.out_dir,
         name=args.name,
         month=args.month,
@@ -291,6 +307,7 @@ async def cli_ida_single(args: Namespace) -> None:
 async def cli_ida_range(args: Namespace) -> None:
     await download_ida_range(
         base_url=args.base_url,
+        dns_servers=[args.dns_pri, args.dns_sec],
         ida_base_dir=args.out_dir,
         name=args.name,
         since=args.since,
@@ -303,6 +320,7 @@ async def cli_ida_range(args: Namespace) -> None:
 async def cli_ida_photometers(args: Namespace) -> None:
     await ida_photometers(
         base_url=args.base_url,
+        dns_servers=[args.dns_pri, args.dns_sec],
         ida_base_dir=args.out_dir,
         seq=args.list,
         rang=args.range,
@@ -316,6 +334,7 @@ async def cli_ida_photometers(args: Namespace) -> None:
 async def cli_ida_location(args: Namespace) -> None:
     await ida_location(
         base_url=args.base_url,
+        dns_servers=[args.dns_pri, args.dns_sec],
         ida_base_dir=args.out_dir,
         lon=args.longitude,
         lat=args.latitude,
@@ -365,6 +384,8 @@ def add_args(parser: ArgumentParser) -> ArgumentParser:
 async def cli_get_ida(args: Namespace) -> None:
     """The main entry point specified by pyproject.toml"""
     args.base_url = decouple.config("IDA_URL")
+    args.dns_pri = decouple.config("DNS_PRIMARY", default="8.8.8.8")
+    args.dns_sec = decouple.config("DNS_SECONDARY", default="8.8.4.4")
     await args.func(args)
     log.info("done!")
 
