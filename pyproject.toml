@@ -36,7 +36,6 @@ dependencies = [
   'aiofiles',
   # Asyncio support for file I/O
   'aiohttp',
-  'aiodns',
   'astropy',
   'astroplan',
   "lica>=1.0.1",
@@ -71,8 +70,8 @@ where = ["src"]
 [tool.setuptools.package-data]
 "tess.ida.dbase.sql" = ["*.sql",]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pytest>=8.3.3",
 ]
 
