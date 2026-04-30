@@ -104,6 +104,7 @@ def float_coords(item: Dict[str, Any]) -> Dict[str, Any]:
     return item
 
 
+
 async def do_get_location_list(
     base_url: str, ida_base_dir: str, timeout: int
 ) -> Sequence:
@@ -111,7 +112,15 @@ async def do_get_location_list(
     url = os.path.join(base_url, target_file)
     result = []
     timeout = aiohttp.ClientTimeout(total=timeout)
-    async with aiohttp.ClientSession(timeout=timeout) as session:
+    log.info("using the new do_get_location_list() with Google DNS")
+    # Resolver DNS con Google (soluciona Windows)
+    resolver = aiohttp.resolver.AsyncResolver(nameservers=['8.8.8.8', '8.8.4.4'])
+    connector = aiohttp.TCPConnector(
+        resolver=resolver,
+        ttl_dns_cache=300,
+        use_dns_cache=True
+    )
+    async with aiohttp.ClientSession(timeout=timeout, connector=connector) as session:
         async with session.get(url, params=None) as resp:
             if resp.status == 404:
                 log.warn("No such file exits: %s", target_file)
@@ -121,11 +130,9 @@ async def do_get_location_list(
             if len(contents) == 0:
                 log.warning("File size is 0. URL scheme may have changed ...")
             with io.StringIO(contents) as fd:
-                # reader = csv.reader(fd, delimiter=';')
                 reader = csv.DictReader(fd, delimiter=";")
                 result = list(map(float_coords, reader))
     return result
-
 
 async def do_ida_single(
     session, base_url: str, ida_base_dir: str, name: str, month: OptStr, exact: OptStr
@@ -193,7 +200,6 @@ def ida_names_by_seq_or_range(seq: Sequence[int], rang: Sequence[int]) -> Tuple[
         result = tuple("stars" + str(i) for i in range(rang[0], rang[1] + 1))
     return result
 
-
 async def download_ida_single(
     base_url: str,
     ida_base_dir: str,
@@ -202,8 +208,10 @@ async def download_ida_single(
     exact: OptStr,
     timeout: int,
 ) -> None:
-    timeout = aiohttp.ClientTimeout(total=timeout)
-    async with aiohttp.ClientSession(timeout=timeout) as session:
+    resolver = aiohttp.resolver.AsyncResolver(nameservers=['8.8.8.8', '8.8.4.4'])
+    connector = aiohttp.TCPConnector(resolver=resolver, ttl_dns_cache=300, use_dns_cache=True)
+    session_timeout = aiohttp.ClientTimeout(total=timeout)
+    async with aiohttp.ClientSession(timeout=session_timeout, connector=connector) as session:
         if not exact:
             month = month.strftime("%Y-%m")
         await do_ida_single(session, base_url, ida_base_dir, name, month, exact)
