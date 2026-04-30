@@ -38,7 +38,7 @@ The `--help` option can be invoked at the global level to discover available sub
 
 Example 1:
 ```bash
-$ tess-ida-get -h
+$ uv run tess-ida-get -h
 
 usage: tess-ida-get [-h] [--version] [--console] [--log-file <FILE>] [--verbose | --quiet] {single,range,photometers,near} ...
 
@@ -90,38 +90,63 @@ options:
 
 ### Installation
 
-We strongly recommend making a Python virtual environment where you install this package and other packages related to your data analysis. A very popular way of performing data analysis is to use [Jupyter Notebooks](https://jupyter.org/), so lets do this as an example.
+We **strongly recommend using the new UV tool** to handle your installation in a virtual environment. The rest of the document assumes uv is available.
 
-The following lines create a jupyter folder from our home directory, a new Python virtual environment named `.venv` and activate it.
+To install UV, please follow the following Astral docs:
+* [Installing UV for Linux/MacOS](https://docs.astral.sh/uv/getting-started/installation/#__tabbed_1_1)
+* [Installing UV for Windows](https://docs.astral.sh/uv/getting-started/installation/#__tabbed_2_2)
+
+
+#### Creating a project directory a virtual environment with UV
+
+We must create a home directory for our analisys project. In the example the base project directory is `tidatools`.
+Downloads and other needed files will be created unde this directory.
 
 ```bash
-~$ mkdir jupyter
-cd jupyter 
-jupyter$ python3 -m venv .venv
-jupyter$ source .venv/bin/activate
-(.venv)  jupyter$ 
+~$ mkdir tidatools
+ ~$ cd tidatools/
+ ```
+ and then a virtual environment inside this base project directpry.
+
+ ```bash
+ tidatools$ uv venv --python 3.12
+Using CPython 3.12.3 interpreter at: /usr/bin/python3
+Creating virtual environment at: .venv
+Activate with: source .venv/bin/activate
+tidatools$ 
 ```
 
-Now we install jupyter and matplotlib for the charts:
+#### Adding TESS-IDA-TOOLS
+
+We can install the latest stable release of the tools from PyPi using UV:
 
 ```bash
-pip install -U pip
-pip install notebook matplotlib
+tidatools$ uv pip install tess-ida-tools
+Resolved 30 packages in 271ms
+Installed 20 packages in 29ms
+ [...]
+ tidatools$ 
+
 ```
 
-Finally, we can install the latest stable release of the tools from PyPi:
-```bash
-pip install tess-ida-tools
-```
-or use the latest development version from our [GitHub repository](https://github.com/STARS4ALL/TESS-IDA-TOOLS): 
+#### Adding convenience packages
+
+A popular way to analyze data is to write Jupyter notebooks and plot results in matplotlib. So let's install these packages inside this virtual environment:
+
 
 ```bash
-pip install git+https://github.com/STARS4ALL/TESS-IDA-TOOLS#main
+tidatools$ uv pip install notebook matplotlib
+ tidatools$ uv pip install notebook matplotlib
+Resolved 100 packages in 764ms
+Prepared 33 packages in 8.79s
+Installed 100 packages in 147ms
+[...]
+tidatools$
 ```
 
 ### Configuration
 
-With the help of a text editor, create a new auxiliar environment file called `.env`
+With the help of a text editor, create a new auxiliar environment file called `.env` located in our `tidatools` directory.
 Inside this file, you must add two environment variables:
 
 ```text
@@ -129,17 +154,19 @@ IDA_URL=<NextCloud Server IDA base URL>
 DATABASE_FILE=adm/tessida.db
 ```
 
-The first one contains the base URL of our NextCloud Server where we publish the IDA files (*you should already have this information*). The second one is the path of an auxiliar SQLite database file that help us in the process of download and convert IDA files to ECSV.
+The first one contains the base URL of our NextCloud Server where we publish the IDA files (*Contact us to obtain this value*). The second one is the path of an auxiliar SQLite database file that help us in the process of download and convert IDA files to ECSV.
 
-The example above shows that we will create an `adm` subdirectory inside our working directory `~/jupyter` and a database file named `tessida.db`.
+The example above shows that we will create an `adm` subdirectory inside our working directory `~/tidatools` and a database file named `tessida.db`.
 
 As the final step, we must initialize the database:
 
 ```bash
-tess-ida-db --console schema create
+tidatools$ uv run tess-ida-db --console schema create
+2026-04-29 11:40:27,265 [INFO    ] [root] ============== tess.ida.dbase.schema 1.1.5 ==============
+2026-04-29 11:40:27,265 [INFO    ] [schema] Creating SQLite Schema on adm/tessida.db
 ```
 
-***Warning*** When issuing the `tess-ida-db schema create` command, the previous database file is deleted !
+***Warning*** When issuing the `uv run tess-ida-db schema create` command, the previous database file is deleted !
 
 All the configuration is done now.
 
@@ -149,7 +176,11 @@ All the configuration is done now.
 
 Getting a single file
 ```bash
-tess-ida-get --console single -n stars289 -m 2023-06 -o IDA
+tidatools$ uv run tess-ida-get --console single -n stars289 -m 2023-06 -o IDA
+2026-04-29 11:41:41,672 [INFO    ] [root] ============== tess-ida-get 1.1.5 ==============
+2026-04-29 11:41:41,827 [INFO    ] [download] [stars289] [2023-06] GET ********** [200 OK]
+2026-04-29 11:41:42,077 [INFO    ] [download] [stars289] [2023-06] Writing /home/rafa/tidatools/IDA/stars289/stars289_2023-06.dat
+2026-04-29 11:41:42,083 [INFO    ] [download] done!
 ```
 
 ### Download an specific IDA file
@@ -159,23 +190,23 @@ Sometimes, the IDA files do not follow the generic `<name>_YYYY_MM.dat` format b
 For example, in Feb 2021, `stars201` was moved from an unknown location to a given location, so the files are named as `stars201_2020-02_-1.dat` and `stars201_2020-02_61.dat`.
 
 ```bash
-tess-ida-get --console single -n stars201 -e stars201_2020-02_-1.dat -o IDA
-tess-ida-get --console single -n stars201 -e stars201_2020-02_61.dat -o IDA
+uv run tess-ida-get --console single -n stars201 -e stars201_2020-02_-1.dat -o IDA
+uv run tess-ida-get --console single -n stars201 -e stars201_2020-02_61.dat -o IDA
 ```
 ### Download files from photometers near a given location
 
 The example below downloads files from TESS photometers since last month in a 50 Km radius of Madrid, Spain.
 
 ```bash
-tess-ida-get --console near -lo -3.703790 -la 40.416775 -ra 50 -o IDA
+uv run tess-ida-get --console near -lo -3.703790 -la 40.416775 -ra 50 -o IDA
 ```
 
 ### Getting IDA files and converting them to ECSV
 
-In your jupyter working directory, with the activated virtual environment, type:
+type:
 
 ```bash
-(.venv)  jupyter$  tess-ida-pipe --console range -n stars289 -s 2019-05 -u 2023-06 -i IDA -o ECSV
+tidatools $  uv run tess-ida-pipe --console range -n stars289 -s 2019-05 -u 2023-06 -i IDA -o ECSV
 ```
 
 The above utility `tess-ida-pipe` is the complete pipeline that:
@@ -196,7 +227,7 @@ As the final product for this step, we have the `ECSV/stars289/stars289_201905-2
 The second step to perform in the command line is launching Jupyter Notebook. From then all, all processing will be done in an notebook.
 
 ```bash
-jupyer notebook
+uv run jupyter notebook
 ```
 
 A snapshot of the notebook can be seen [here](doc/TESS-IDA-TOOLS-Example.md)
@@ -277,13 +308,13 @@ The pipeline will stop if it detects that there is not known `Position` during t
 1. Enter new cordinates in the database
 
 ```bash
-tess-ida-db --console coords add --name stars4 --latitude 40.5 --longitude -3.1 --height 650
+uv run tess-ida-db --console coords add --name stars4 --latitude 40.5 --longitude -3.1 --height 650
 ```
 
 2. Then, re-run the pipeline with the `--fix` flag
 
 ```bash
-(.venv)  jupyter$  tess-ida-pipe --console range -n stars4 -s 2024-03 -u 2024-06 -i IDA -o ECSV --fix
+uv run tess-ida-pipe --console range -n stars4 -s 2024-03 -u 2024-06 -i IDA -o ECSV --fix
 ```
 
 ### Listing positions
@@ -297,8 +328,8 @@ TBD
 You may modify any or all coordinates.
 
 ```bash
-tess-ida-db --console coords update --name stars4 --longitude -3.15
-tess-ida-db --console coords update --name stars4 --latitude 40.8 --height 690
+uv run tess-ida-db --console coords update --name stars4 --longitude -3.15
+uv run tess-ida-db --console coords update --name stars4 --latitude 40.8 --height 690
 ```
 
 2. Delete ***all related ECSV files !***
@@ -310,7 +341,7 @@ rm -fr ECSV/stars4/*.ecsv
 3. Then, re-run the pipeline with the `--fix` flag
 
 ```bash
-(.venv)  jupyter$  tess-ida-pipe --console range -n stars4 -s 2024-03 -u 2024-06 -i IDA -o ECSV --fix
+uv run  tess-ida-pipe --console range -n stars4 -s 2024-03 -u 2024-06 -i IDA -o ECSV --fix
 ```
 
 
@@ -322,7 +353,7 @@ You probably want this once you know that the IDA monthly files incorporate Posi
 1. Delete coordinates from the database
 
 ```bash
-tess-ida-db --console coords delete --name stars4
+uv run tess-ida-db --console coords delete --name stars4
 ```
 
 2. Delete ***all related ECSV files !***
@@ -334,5 +365,5 @@ rm -fr ECSV/stars4/*.ecsv
 3. Then, re-run the pipeline ***without*** the  `--fix` flag
 
 ```bash
-(.venv)  jupyter$  tess-ida-pipe --console range -n stars4 -s 2024-03 -u 2024-06 -i IDA -o ECSV
+uv run tess-ida-pipe --console range -n stars4 -s 2024-03 -u 2024-06 -i IDA -o ECSV
 ```

@@ -16,7 +16,7 @@ import logging.handlers
 from datetime import datetime
 import argparse
 from argparse import Namespace
-from typing import Union, Optional
+from typing import Union
 
 # -------------------
 # Third party imports
@@ -64,7 +64,7 @@ def prev_month() -> datetime:
     return month - relativedelta(months=1)
 
 
-def to_phot_dir(base_dir: Optional[str], name: str) -> str:
+def to_phot_dir(base_dir: str | None, name: str) -> str:
     cwd = os.getcwd()
     base_dir = cwd if base_dir is None else base_dir
     base_dir = os.path.join(cwd, base_dir) if not os.path.isabs(base_dir) else base_dir
@@ -97,12 +97,14 @@ def do_ida_single_month(
     month: OptStr,
     exact: OptStr,
     timeout: int,
+    insecure: bool,
 ) -> None:
     target_file = name + "_" + month + ".dat" if not exact else exact
     url = os.path.join(base_url, name, target_file)
     _, month1 = name_month(target_file)
     params = None
-    resp = requests.get(url, params=params, timeout=timeout)
+    # For the time being we disable server certificate validation
+    resp = requests.get(url, params=params, timeout=timeout, verify=not insecure)
     if resp.status_code == 404:
         log.warning("[%s] [%s] No monthly file exits: %s", name, month1, target_file)
         return
@@ -132,6 +134,7 @@ def cli_ida_single(base_url: str, args: Namespace) -> None:
         month=month,
         exact=args.exact,
         timeout=4,
+        insecure=args.insecure,
     )
 
 
@@ -145,6 +148,7 @@ def cli_ida_range(base_url: str, args: Namespace) -> None:
             month=month.strftime("%Y-%m"),
             exact=None,
             timeout=4,
+            insecure=args.insecure,
         )
         month += relativedelta(months=1)
 
@@ -221,6 +225,7 @@ def args_parser(name: str, version: str, description: str) -> None:
     parser_single.add_argument(
         "-o", "--out-dir", type=str, default=None, help="Output base directory"
     )
+    parser_single.add_argument("--insecure", action="store_true", help="Don't verify server certificates.")
     group1 = parser_single.add_mutually_exclusive_group(required=True)
     group1.add_argument(
         "-e", "--exact", type=str, default=None, help="Specific monthly file name"
@@ -258,6 +263,7 @@ def args_parser(name: str, version: str, description: str) -> None:
     parser_range.add_argument(
         "-o", "--out-dir", type=str, default=None, help="Output IDA base directory"
     )
+    parser_range.add_argument("--insecure", action="store_true", help="Don't verify server certificates.")
     parser_phot = subparser.add_parser(
         "photometers", help="Download a month range from selected photometers"
     )
@@ -299,6 +305,7 @@ def args_parser(name: str, version: str, description: str) -> None:
     parser_phot.add_argument(
         "-o", "--out-dir", type=str, default=None, help="Output IDA base directory"
     )
+    parser_phot.add_argument("--insecure", action="store_true", help="Don't verify server certificates.")
     return parser
 
 
