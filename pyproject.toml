@@ -36,6 +36,7 @@ dependencies = [
   'aiofiles',
   # Asyncio support for file I/O
   'aiohttp',
+  'certifi',
   'astropy',
   'astroplan',
   "lica>=1.0.1",

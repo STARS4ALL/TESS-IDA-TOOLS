@@ -11,6 +11,7 @@
 import os
 import io
 import csv
+import ssl
 import math
 import asyncio
 import logging
@@ -20,6 +21,7 @@ from datetime import datetime
 from argparse import Namespace, ArgumentParser
 from typing import Dict, Tuple, Sequence, Optional, Any
 
+
 # -------------------
 # Third party imports
 # -------------------
@@ -27,7 +29,7 @@ from typing import Dict, Tuple, Sequence, Optional, Any
 import decouple
 import aiohttp
 import aiofiles
-
+import certifi
 
 from lica.asyncio.cli import execute
 from lica.misc import group
@@ -209,7 +211,8 @@ async def download_ida_single(
     timeout: int,
 ) -> None:
     resolver = aiohttp.resolver.AsyncResolver(nameservers=['8.8.8.8', '8.8.4.4'])
-    connector = aiohttp.TCPConnector(resolver=resolver, ttl_dns_cache=300, use_dns_cache=True)
+    ssl_context = ssl.create_default_context(cafile=certifi.where())
+    connector = aiohttp.TCPConnector(resolver=resolver, ssl=ssl_context, ttl_dns_cache=300, use_dns_cache=True)
     session_timeout = aiohttp.ClientTimeout(total=timeout)
     async with aiohttp.ClientSession(timeout=session_timeout, connector=connector) as session:
         if not exact:
